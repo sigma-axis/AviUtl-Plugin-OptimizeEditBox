@@ -93,6 +93,7 @@ editBoxDelay=0
 ; 遅延させたくない場合は 0 を指定します。
 usesUnicodeInput=0 ; テキストオブジェクトで UNICODE 文字を入力したい場合は 1 を指定します。
 usesCtrlA=0 ; エディットボックスで Ctrl+A を有効にしたい場合は 1 を指定します。ただし、usesUnicodeInput が 1 のときのみ有効になります。
+            ; 追記: aviutl_dark.exe 経由で起動すると (DarkenWindow.aul がなくても) Ctrl+A が自動で有効になるため不要です．
 usesGradientFill=0 ; グラデーション描画を変更する場合は 1 を指定します。ただし、patch.aul のグラデーション描画を無効にしている場合のみ有効になります。
 innerColor=0xffffff ; 内側の枠の色。
 innerEdgeWidth=1 ; 内側の枠の横幅。0以下なら枠の左右は描画しない。
