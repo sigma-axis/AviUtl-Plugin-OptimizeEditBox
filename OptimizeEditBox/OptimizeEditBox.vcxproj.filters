@@ -7,35 +7,18 @@
     <Filter Include="AviUtl">
       <UniqueIdentifier>{4d2e4585-d04a-4741-b8f7-db9c25dac0e5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="AviUtl\aulslib">
-      <UniqueIdentifier>{c0a3bd81-3571-465f-9341-fcee23d62034}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="pch.h" />
-    <ClInclude Include="..\Common\MyTracer.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="OptimizeEditBox.h" />
-    <ClInclude Include="..\AviUtl\aulslib\aviutl.h">
-      <Filter>AviUtl\aulslib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\AviUtl\aulslib\exedit.h">
-      <Filter>AviUtl\aulslib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\AviUtl\aulslib\lua.h">
-      <Filter>AviUtl\aulslib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\AviUtl\aulslib\memref.h">
-      <Filter>AviUtl\aulslib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\AviUtl\aulslib\memref2.h">
-      <Filter>AviUtl\aulslib</Filter>
-    </ClInclude>
     <ClInclude Include="OptimizeEditBox_Hook.h" />
+    <ClInclude Include="coloref_wrap.h" />
+    <ClInclude Include="delay_timer.h" />
+    <ClInclude Include="editbox_predicatesh.h" />
+    <ClInclude Include="..\AviUtl\aviutl_plugin_sdk\filter.h">
+      <Filter>AviUtl</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="pch.cpp" />
     <ClCompile Include="OptimizeEditBox.cpp" />
     <ClCompile Include="OptimizeEditBox_Filter.cpp" />
     <ClCompile Include="OptimizeEditBox_Hook.cpp" />

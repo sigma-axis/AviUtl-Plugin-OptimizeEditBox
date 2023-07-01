@@ -6,7 +6,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-using byte = uint8_t;
 #pragma warning(push)
 #pragma warning(disable : 4819)	// suppress SJIS warnings.
 #include "aviutl_plugin_sdk/filter.h"
