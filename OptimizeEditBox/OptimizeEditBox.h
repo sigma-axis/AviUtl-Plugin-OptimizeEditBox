@@ -1,54 +1,73 @@
 ﻿#pragma once
 
+#include <cstdint>
+
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
+using byte = uint8_t;
+#pragma warning(push)
+#pragma warning(disable : 4819)	// suppress SJIS warnings.
+#include "aviutl_plugin_sdk/filter.h"
+#pragma warning(pop)
+
+#include "coloref_wrap.h"
+
 //---------------------------------------------------------------------
 
-class COptimizeEditBoxApp
+namespace OptimizeEditBox
 {
-public:
+	class COptimizeEditBoxApp
+	{
+		int32_t* m_is_playing; // 0: not playing, 1: playing.
 
-	HINSTANCE m_instance;
+	public:
+		inline bool is_playing() { return *m_is_playing != 0; }
 
-	BOOL m_usesUnicodeInput;
-	BOOL m_usesCtrlA;
-	BOOL m_usesGradientFill;
+		int m_editBoxDelay;
+		bool m_usesUnicodeInput;
+		bool m_usesCtrlA;
+		bool m_usesGradientFill;
 
-	COLORREF m_innerColor;
-	int m_innerEdgeWidth;
-	int m_innerEdgeHeight;
+		colorref_wrap m_innerColor;
+		int m_innerEdgeWidth;
+		int m_innerEdgeHeight;
 
-	COLORREF m_outerColor;
-	int m_outerEdgeWidth;
-	int m_outerEdgeHeight;
+		colorref_wrap m_outerColor;
+		int m_outerEdgeWidth;
+		int m_outerEdgeHeight;
 
-	COLORREF m_selectionColor;
-	COLORREF m_selectionEdgeColor;
-	COLORREF m_selectionBkColor;
+		colorref_wrap m_selectionColor;
+		colorref_wrap m_selectionEdgeColor;
+		colorref_wrap m_selectionBkColor;
 
-	COLORREF m_layerBorderLeftColor;
-	COLORREF m_layerBorderRightColor;
-	COLORREF m_layerBorderTopColor;
-	COLORREF m_layerBorderBottomColor;
-	COLORREF m_layerSeparatorColor;
+		colorref_wrap m_layerBorderLeftColor;
+		colorref_wrap m_layerBorderRightColor;
+		colorref_wrap m_layerBorderTopColor;
+		colorref_wrap m_layerBorderBottomColor;
+		colorref_wrap m_layerSeparatorColor;
 
-	int m_addTextEditBoxHeight;
-	int m_addScriptEditBoxHeight;
+		int m_addTextEditBoxHeight;
+		int m_addScriptEditBoxHeight;
+		int m_tabstopTextEditBox;
+		int m_tabstopScriptEditBox;
 
-	HFONT m_font;
+		HFONT m_font;
 
-public:
+	public:
 
-	COptimizeEditBoxApp();
-	~COptimizeEditBoxApp();
+		COptimizeEditBoxApp();
 
-	BOOL initHook();
-	BOOL termHook();
+		bool initHook(intptr_t exedit_auf);
+		bool termHook();
 
-	BOOL DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved);
-	BOOL func_init(FILTER *fp);
-	BOOL func_exit(FILTER *fp);
-	BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip);
-};
+		bool DllMain(HINSTANCE instance, DWORD reason, void* reserved);
+		bool func_init(FILTER* fp);
+		bool func_exit(FILTER* fp);
+	};
 
-extern COptimizeEditBoxApp theApp;
+	extern COptimizeEditBoxApp theApp;
+}
 
 //---------------------------------------------------------------------
