@@ -1,255 +1,251 @@
-﻿#include "pch.h"
+﻿#include <array>
+
 #include "OptimizeEditBox.h"
 #include "OptimizeEditBox_Hook.h"
+#include "delay_timer.h"
+
+#include <shlwapi.h>
+#pragma comment(lib, "shlwapi.lib")
 
 //---------------------------------------------------------------------
 
-COptimizeEditBoxApp theApp;
-
-// デバッグ用コールバック関数。デバッグメッセージを出力する
-void ___outputLog(LPCTSTR text, LPCTSTR output)
+namespace OptimizeEditBox
 {
-	::OutputDebugString(output);
-}
+	COptimizeEditBoxApp theApp;
 
-COptimizeEditBoxApp::COptimizeEditBoxApp()
-{
-	// 初期化。基本 0。
-	m_instance = 0;
+	COptimizeEditBoxApp::COptimizeEditBoxApp() :
+		// 初期化。基本 0。
+		m_is_playing{ nullptr },
 
-	m_usesUnicodeInput = FALSE;
-	m_usesCtrlA = FALSE;
-	m_usesGradientFill = FALSE;
+		m_editBoxDelay{ 0 },
+		m_usesUnicodeInput{ false },
+		m_usesCtrlA{ false },
+		m_usesGradientFill{ false },
 
-	m_innerColor = RGB(0xff, 0xff, 0xff);
-	m_innerEdgeWidth = 1;
-	m_innerEdgeHeight = 1;
+		m_innerColor{ 0xffffff }, // white
+		m_innerEdgeWidth{ 1 },
+		m_innerEdgeHeight{ 1 },
 
-	m_outerColor = RGB(0x00, 0x00, 0x00);
-	m_outerEdgeWidth = 1;
-	m_outerEdgeHeight = 1;
+		m_outerColor{ 0x000000 }, // black
+		m_outerEdgeWidth{ 1 },
+		m_outerEdgeHeight{ 1 },
 
-	m_selectionColor = CLR_NONE;
-	m_selectionEdgeColor = CLR_NONE;
-	m_selectionBkColor = CLR_NONE;
+		m_selectionColor{},
+		m_selectionEdgeColor{},
+		m_selectionBkColor{},
 
-	m_layerBorderLeftColor = CLR_NONE;
-	m_layerBorderRightColor = CLR_NONE;
-	m_layerBorderTopColor = CLR_NONE;
-	m_layerBorderBottomColor = CLR_NONE;
-	m_layerSeparatorColor = CLR_NONE;
+		m_layerBorderLeftColor{},
+		m_layerBorderRightColor{},
+		m_layerBorderTopColor{},
+		m_layerBorderBottomColor{},
+		m_layerSeparatorColor{},
 
-	m_addTextEditBoxHeight = 0;
-	m_addScriptEditBoxHeight = 0;
+		m_addTextEditBoxHeight{ 0 },
+		m_addScriptEditBoxHeight{ 0 },
+		m_tabstopTextEditBox{ 0 },
+		m_tabstopScriptEditBox{ 0 },
 
-	m_font = 0;
-}
+		m_font{ nullptr }
+	{}
 
-COptimizeEditBoxApp::~COptimizeEditBoxApp()
-{
-}
-
-BOOL COptimizeEditBoxApp::initHook()
-{
-	MY_TRACE(_T("COptimizeEditBoxApp::initHook()\n"));
-
-	DWORD exedit_auf = (DWORD)::GetModuleHandle(_T("exedit.auf"));
-
-	true_Exedit_FillGradation = (Type_Exedit_FillGradation)(exedit_auf + 0x00036a70);
-
-	if (m_layerBorderLeftColor != CLR_NONE) hookCall(exedit_auf + 0x00038845, Exedit_DrawLineLeft);
-	if (m_layerBorderRightColor != CLR_NONE) hookCall(exedit_auf + 0x000388AA, Exedit_DrawLineRight);
-	if (m_layerBorderTopColor != CLR_NONE) hookCall(exedit_auf + 0x00038871, Exedit_DrawLineTop);
-	if (m_layerBorderBottomColor != CLR_NONE) hookCall(exedit_auf + 0x000388DA, Exedit_DrawLineBottom);
-	if (m_layerSeparatorColor != CLR_NONE) hookCall(exedit_auf + 0x00037A1F, Exedit_DrawLineSeparator);
-
-	if (m_selectionColor != CLR_NONE) writeAbsoluteAddress(exedit_auf + 0x0003807E, &m_selectionColor);
-	if (m_selectionEdgeColor != CLR_NONE) writeAbsoluteAddress(exedit_auf + 0x00038076, &m_selectionEdgeColor);
-	if (m_selectionBkColor != CLR_NONE) writeAbsoluteAddress(exedit_auf + 0x00038087, &m_selectionBkColor);
-
-	if (m_addTextEditBoxHeight)
+	bool COptimizeEditBoxApp::initHook(intptr_t exedit_auf)
 	{
-		hookAbsoluteCall(exedit_auf + 0x0008C46E, Exedit_CreateTextEditBox);
-		addInt32(exedit_auf + 0x0008CC56 + 1, m_addTextEditBoxHeight);
-	}
+		using namespace memory;
+		if (m_editBoxDelay > 0) {
+			true_Exedit_SettingDialog_WndProc = writeAbsoluteAddress(
+				exedit_auf + 0x2E800 + 4, hook_Exedit_SettingDialog_WndProc);
+			m_is_playing = reinterpret_cast<decltype(m_is_playing)>(exedit_auf + 0x1a52ec);
 
-	if (m_addScriptEditBoxHeight)
-	{
-		hookAbsoluteCall(exedit_auf + 0x00087658, Exedit_CreateScriptEditBox);
-		addInt32(exedit_auf + 0x000876DE + 1, m_addScriptEditBoxHeight);
-	}
-
-	DetourTransactionBegin();
-	DetourUpdateThread(::GetCurrentThread());
-
-	if (m_usesUnicodeInput)
-	{
-		ATTACH_HOOK_PROC(GetMessageA);
-//		ATTACH_HOOK_PROC(PeekMessageA);
-	}
-
-	if (m_usesGradientFill)
-	{
-		ATTACH_HOOK_PROC(Exedit_FillGradation);
-	}
-
-	if (DetourTransactionCommit() == NO_ERROR)
-	{
-		MY_TRACE(_T("API フックのインストールに成功しました\n"));
-
-		return TRUE;
-	}
-	else
-	{
-		MY_TRACE(_T("API フックのインストールに失敗しました\n"));
-
-		return FALSE;
-	}
-}
-
-BOOL COptimizeEditBoxApp::termHook()
-{
-	MY_TRACE(_T("COptimizeEditBoxApp::termHook()\n"));
-
-	DetourTransactionBegin();
-	DetourUpdateThread(::GetCurrentThread());
-
-	if (m_usesUnicodeInput)
-	{
-		DETACH_HOOK_PROC(GetMessageA);
-//		DETACH_HOOK_PROC(PeekMessageA);
-	}
-
-	if (m_usesGradientFill)
-	{
-		DETACH_HOOK_PROC(Exedit_FillGradation);
-	}
-
-	if (DetourTransactionCommit() == NO_ERROR)
-	{
-		MY_TRACE(_T("API フックのアンインストールに成功しました\n"));
-
-		return TRUE;
-	}
-	else
-	{
-		MY_TRACE(_T("API フックのアンインストールに失敗しました\n"));
-
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-BOOL COptimizeEditBoxApp::DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
-{
-	switch (reason)
-	{
-	case DLL_PROCESS_ATTACH:
-		{
-			MY_TRACE(_T("DLL_PROCESS_ATTACH\n"));
-
-			// DLL インスタンスハンドルを m_instance に格納する。
-			m_instance = instance;
-			MY_TRACE_HEX(m_instance);
-
-			// この DLL の参照カウンタを増やしておく。
-			WCHAR moduleFileName[MAX_PATH] = {};
-			::GetModuleFileNameW(m_instance, moduleFileName, MAX_PATH);
-			::LoadLibraryW(moduleFileName);
-
-			break;
+			// turn on the timer.
+			delay_timer::Exedit_SettingDialog_WndProc.activate();
 		}
-	case DLL_PROCESS_DETACH:
+
+		if (m_usesGradientFill)
+			true_Exedit_FillGradation = reinterpret_cast<decltype(true_Exedit_FillGradation)>(exedit_auf + 0x00036a70);
+
+		if (m_layerBorderLeftColor.is_valid()) hookCall(exedit_auf + 0x00038845, Exedit_DrawLineLeft);
+		if (m_layerBorderRightColor.is_valid()) hookCall(exedit_auf + 0x000388AA, Exedit_DrawLineRight);
+		if (m_layerBorderTopColor.is_valid()) hookCall(exedit_auf + 0x00038871, Exedit_DrawLineTop);
+		if (m_layerBorderBottomColor.is_valid()) hookCall(exedit_auf + 0x000388DA, Exedit_DrawLineBottom);
+		if (m_layerSeparatorColor.is_valid()) hookCall(exedit_auf + 0x00037A1F, Exedit_DrawLineSeparator);
+
+		if (m_selectionColor.is_valid()) writeAbsoluteAddress(exedit_auf + 0x0003807E, &m_selectionColor);
+		if (m_selectionEdgeColor.is_valid()) writeAbsoluteAddress(exedit_auf + 0x00038076, &m_selectionEdgeColor);
+		if (m_selectionBkColor.is_valid()) writeAbsoluteAddress(exedit_auf + 0x00038087, &m_selectionBkColor);
+
+		if (m_addTextEditBoxHeight != 0 || m_tabstopTextEditBox > 0 || m_font != nullptr)
 		{
-			MY_TRACE(_T("DLL_PROCESS_DETACH\n"));
-
-			break;
+			hookAbsoluteCall(exedit_auf + 0x0008C46E, Exedit_CreateTextEditBox);
+			if (m_addTextEditBoxHeight != 0)
+				addInt32(exedit_auf + 0x0008CC56 + 1, m_addTextEditBoxHeight);
 		}
+
+		if (m_addScriptEditBoxHeight != 0 || m_tabstopScriptEditBox > 0 || m_font != nullptr)
+		{
+			hookAbsoluteCall(exedit_auf + 0x00087658, Exedit_CreateScriptEditBox);
+			if (m_addScriptEditBoxHeight != 0)
+				addInt32(exedit_auf + 0x000876DE + 1, m_addScriptEditBoxHeight);
+		}
+
+		DetourTransactionBegin();
+		DetourUpdateThread(::GetCurrentThread());
+
+		if (m_usesUnicodeInput) ATTACH_HOOK_PROC(GetMessageA);
+		if (m_usesGradientFill) ATTACH_HOOK_PROC(Exedit_FillGradation);
+
+		if (DetourTransactionCommit() != NO_ERROR) return false;
+
+		return true;
 	}
 
-	return TRUE;
-}
-
-BOOL COptimizeEditBoxApp::func_init(FILTER *fp)
-{
-	MY_TRACE(_T("COptimizeEditBoxApp::func_init()\n"));
-
-	// ini ファイルから設定を読み込む。
-	TCHAR path[MAX_PATH];
-	::GetModuleFileName(m_instance, path, MAX_PATH);
-	::PathRenameExtension(path, _T(".ini"));
-	MY_TRACE_TSTR(path);
-
-	m_usesUnicodeInput	= ::GetPrivateProfileInt(_T("Settings"), _T("usesUnicodeInput"),	m_usesUnicodeInput, path);
-	m_usesCtrlA			= ::GetPrivateProfileInt(_T("Settings"), _T("usesCtrlA"),			m_usesCtrlA, path);
-	m_usesGradientFill	= ::GetPrivateProfileInt(_T("Settings"), _T("usesGradientFill"),	m_usesGradientFill, path);
-
-	MY_TRACE_INT(m_usesUnicodeInput);
-	MY_TRACE_INT(m_usesCtrlA);
-	MY_TRACE_INT(m_usesGradientFill);
-
-	BYTE innerColorR = (BYTE)::GetPrivateProfileInt(_T("Settings"), _T("innerColorR"), GetRValue(m_innerColor), path);
-	BYTE innerColorG = (BYTE)::GetPrivateProfileInt(_T("Settings"), _T("innerColorG"), GetGValue(m_innerColor), path);
-	BYTE innerColorB = (BYTE)::GetPrivateProfileInt(_T("Settings"), _T("innerColorB"), GetBValue(m_innerColor), path);
-	m_innerColor = RGB(innerColorR, innerColorG, innerColorB);
-	m_innerEdgeWidth = ::GetPrivateProfileInt(_T("Settings"), _T("innerEdgeWidth"), m_innerEdgeWidth, path);
-	m_innerEdgeHeight = ::GetPrivateProfileInt(_T("Settings"), _T("innerEdgeHeight"), m_innerEdgeHeight, path);
-
-	BYTE outerColorR = (BYTE)::GetPrivateProfileInt(_T("Settings"), _T("outerColorR"), GetRValue(m_outerColor), path);
-	BYTE outerColorG = (BYTE)::GetPrivateProfileInt(_T("Settings"), _T("outerColorG"), GetGValue(m_outerColor), path);
-	BYTE outerColorB = (BYTE)::GetPrivateProfileInt(_T("Settings"), _T("outerColorB"), GetBValue(m_outerColor), path);
-	m_outerColor = RGB(outerColorR, outerColorG, outerColorB);
-	m_outerEdgeWidth = ::GetPrivateProfileInt(_T("Settings"), _T("outerEdgeWidth"), m_outerEdgeWidth, path);
-	m_outerEdgeHeight = ::GetPrivateProfileInt(_T("Settings"), _T("outerEdgeHeight"), m_outerEdgeHeight, path);
-
-	m_selectionColor = ::GetPrivateProfileInt(_T("Settings"), _T("selectionColor"), m_selectionColor, path);
-	m_selectionEdgeColor = ::GetPrivateProfileInt(_T("Settings"), _T("selectionEdgeColor"), m_selectionEdgeColor, path);
-	m_selectionBkColor = ::GetPrivateProfileInt(_T("Settings"), _T("selectionBkColor"), m_selectionBkColor, path);
-
-	m_layerBorderLeftColor = ::GetPrivateProfileInt(_T("Settings"), _T("layerBorderLeftColor"), m_layerBorderLeftColor, path);
-	m_layerBorderRightColor = ::GetPrivateProfileInt(_T("Settings"), _T("layerBorderRightColor"), m_layerBorderRightColor, path);
-	m_layerBorderTopColor = ::GetPrivateProfileInt(_T("Settings"), _T("layerBorderTopColor"), m_layerBorderTopColor, path);
-	m_layerBorderBottomColor = ::GetPrivateProfileInt(_T("Settings"), _T("layerBorderBottomColor"), m_layerBorderBottomColor, path);
-	m_layerSeparatorColor = ::GetPrivateProfileInt(_T("Settings"), _T("layerSeparatorColor"), m_layerSeparatorColor, path);
-
-	m_addTextEditBoxHeight = ::GetPrivateProfileInt(_T("Settings"), _T("addTextEditBoxHeight"), m_addTextEditBoxHeight, path);
-	m_addScriptEditBoxHeight = ::GetPrivateProfileInt(_T("Settings"), _T("addScriptEditBoxHeight"), m_addScriptEditBoxHeight, path);
-
-	TCHAR fontName[MAX_PATH] = {};
-	::GetPrivateProfileString(_T("Settings"), _T("fontName"), _T(""), fontName, MAX_PATH, path);
-	if (::lstrlen(fontName) != 0)
+	bool COptimizeEditBoxApp::termHook()
 	{
-		int fontSize = ::GetPrivateProfileInt(_T("Settings"), _T("fontSize"), 0, path);
-		int fontPitch = ::GetPrivateProfileInt(_T("Settings"), _T("fontPitch"), 0, path);
-		int dpi = ::GetSystemDpiForProcess(::GetCurrentProcess());
-		fontSize = ::MulDiv(fontSize, dpi, 96);
-		m_font = ::CreateFont(fontSize, 0, 0, 0, 0, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, fontPitch, fontName);
+		DetourTransactionBegin();
+		DetourUpdateThread(::GetCurrentThread());
+
+		if (m_usesUnicodeInput) DETACH_HOOK_PROC(GetMessageA);
+		if (m_usesGradientFill) DETACH_HOOK_PROC(Exedit_FillGradation);
+
+		if (DetourTransactionCommit() != NO_ERROR) return false;
+
+		return true;
 	}
 
-	MY_TRACE_HEX(m_font);
+	bool COptimizeEditBoxApp::DllMain(HINSTANCE instance, DWORD reason, void* reserved)
+	{
+		switch (reason)
+		{
+		case DLL_PROCESS_ATTACH:
+			{
+				// この DLL の参照カウンタを増やしておく。
+				char moduleFileName[MAX_PATH];
+				::GetModuleFileNameA(instance, moduleFileName, std::size(moduleFileName));
+				::LoadLibraryA(moduleFileName);
 
-	initHook();
+				break;
+			}
+		case DLL_PROCESS_DETACH:
+			{
+				break;
+			}
+		}
 
-	return TRUE;
-}
+		return true;
+	}
 
-BOOL COptimizeEditBoxApp::func_exit(FILTER *fp)
-{
-	MY_TRACE(_T("COptimizeEditBoxApp::func_exit()\n"));
+	// exedit.auf を探してそのバージョンが 0.92 であることを確認，
+	// そのハンドルの数値化を返す．失敗したなら 0 を返す．		
+	static inline intptr_t find_exedit_auf_092(FILTER* fp)
+	{
+		constexpr const char* exedit_092_info = "拡張編集(exedit) version 0.92 by ＫＥＮくん";
+		SYS_INFO si;
+		fp->exfunc->get_sys_info(nullptr, &si);
+		for (int i = 0; i < si.filter_n; i++) {
+			if (auto fp_other = reinterpret_cast<FILTER*>(fp->exfunc->get_filterp(i));
+				fp_other->information != nullptr &&
+				std::strcmp(fp_other->information, exedit_092_info) == 0)
+				return reinterpret_cast<intptr_t>(fp_other->dll_hinst);
+		}
+		return 0;
+	}
 
-	::DeleteObject(m_font), m_font = 0;
+	bool COptimizeEditBoxApp::func_init(FILTER* fp)
+	{
+		auto exedit_auf = find_exedit_auf_092(fp);
+		if (exedit_auf == 0) {
+			::MessageBoxA(fp->hwnd, "拡張編集 0.92 が見つかりませんでした．",
+				fp->name, MB_OK | MB_ICONEXCLAMATION);
+			return false;
+		}
 
-	termHook();
+		// ini ファイルから設定を読み込む。
+		char path[MAX_PATH];
+		::GetModuleFileNameA(fp->dll_hinst, path, std::size(path));
+		::PathRenameExtensionA(path, ".ini");
 
-	return TRUE;
-}
+#define read_ini_val(key, def)	static_cast<int32_t>(			\
+	::GetPrivateProfileIntA("Settings", key, static_cast<int32_t>(def), path))
+#define read_config(name)										\
+	if constexpr (std::is_same_v<bool, decltype(m_##name)>)		\
+		m_##name = read_ini_val(#name, m_##name ? 1 : 0) != 0;	\
+	else m_##name = static_cast<decltype(m_##name)>(read_ini_val(#name, m_##name))
 
-BOOL COptimizeEditBoxApp::func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
-{
-	MY_TRACE(_T("COptimizeEditBoxApp::func_proc()\n"));
+		read_config(editBoxDelay);
+		read_config(usesUnicodeInput);
+		read_config(usesCtrlA);
+		read_config(usesGradientFill);
 
-	return FALSE;
+		if (m_usesGradientFill) {
+			read_config(innerColor);
+			read_config(innerEdgeWidth);
+			read_config(innerEdgeHeight);
+
+			read_config(outerColor);
+			read_config(outerEdgeWidth);
+			read_config(outerEdgeHeight);
+		}
+
+		read_config(selectionColor);
+		read_config(selectionEdgeColor);
+		read_config(selectionBkColor);
+
+		read_config(layerBorderLeftColor);
+		read_config(layerBorderRightColor);
+		read_config(layerBorderTopColor);
+		read_config(layerBorderBottomColor);
+		read_config(layerSeparatorColor);
+
+		read_config(addTextEditBoxHeight);
+		read_config(addScriptEditBoxHeight);
+		read_config(tabstopTextEditBox);
+		m_tabstopTextEditBox = std::max(0, m_tabstopTextEditBox);
+		read_config(tabstopScriptEditBox);
+		m_tabstopScriptEditBox = std::max(0, m_tabstopScriptEditBox);
+
+		// フォント名はワイド文字に変換してから CreateFontW() する．
+		constexpr uint32_t CP_SHIFT_JIS = 932;
+		constexpr auto read_wide_str = []<uint32_t codepage, size_t N>(wchar_t (&output)[N], auto ansi_reader) {
+			static_assert(codepage == CP_SHIFT_JIS || codepage == CP_UTF8);
+
+			constexpr int L = (codepage == CP_UTF8 ? 3 : 2) * N;
+			char tmp[L + 1];
+			int len = ansi_reader(tmp, L + 1); // len doesn't count the terminating null.
+			if (!(0 < len && len <= L - 1)) return false;
+
+			len = ::MultiByteToWideChar(codepage, 0, tmp, -1, nullptr, 0); // len counts the terminating null.
+			return 0 < len && len <= N &&
+				::MultiByteToWideChar(codepage, 0, tmp, -1, output, N) > 0;
+		};
+		// UTF8 でフォント名が指定されているものとする．
+		if (wchar_t fontName[LF_FACESIZE]; read_wide_str.operator()<CP_UTF8>(fontName, [&](char* str, size_t len) {
+			return ::GetPrivateProfileStringA("Settings", "fontName", "", str, len, path);
+		})) {
+			int fontSize = read_ini_val("fontSize", 0);
+			int fontPitch = read_ini_val("fontPitch", 0);
+			int dpi = ::GetSystemDpiForProcess(::GetCurrentProcess());
+			fontSize = fontSize * dpi / 96;
+
+#pragma warning(suppress : 6054) // fontName is null-terminated for sure.
+			m_font = ::CreateFontW(fontSize, 0, 0, 0, 0, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, fontPitch, fontName);
+		}
+#undef read_config
+#undef read_ini_val
+
+		return initHook(exedit_auf);
+	}
+
+	bool COptimizeEditBoxApp::func_exit(FILTER* fp)
+	{
+		if (m_editBoxDelay > 0)
+			delay_timer::delay_timer::deactivate();
+
+		if (m_font != nullptr) {
+			::DeleteObject(m_font);
+			m_font = nullptr;
+		}
+
+		return termHook();
+	}
 }
 
 //---------------------------------------------------------------------
