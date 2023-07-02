@@ -1,6 +1,6 @@
 ﻿# AviUtl プラグイン - エディットボックス最適化 (sigma-axis 改造版)
 
-蛇色様の [エディットボックス最適化プラグイン](https://github.com/sigma-axis/AviUtl-Plugin-OptimizeEditBox) のバージョン 8.0.0 を元に機能追加，バグ修正，自分好みのアレンジを加えたものです．
+蛇色様の [エディットボックス最適化プラグイン](https://github.com/hebiiro/AviUtl-Plugin-OptimizeEditBox) のバージョン 8.0.0 を元に機能追加，バグ修正，自分好みのアレンジを加えたものです．
 
 ## 改造のきっかけ
 
@@ -150,7 +150,7 @@ tabstopScriptEditBox=0 ; スクリプト制御のエディットボックス内�
 * GitHub - https://github.com/hebiiro
 * Twitter - https://twitter.com/io_hebiiro
 
-*改造版についての不具合報告等はオリジナル版の作成者ではなく，私 sigma-axis にまでご連絡ください．* [連絡先](#連絡・バグ報告)
+*改造版についての不具合報告等はオリジナル版の作成者ではなく，私 sigma-axis にまでご連絡ください．* [連絡先](#連絡バグ報告)
 
 ## 免責事項
 
