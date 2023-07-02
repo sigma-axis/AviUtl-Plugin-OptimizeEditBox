@@ -19,15 +19,15 @@ namespace OptimizeEditBox::delay_timer
 		static constexpr UINT message = WM_COMMAND;
 		WPARAM wparam = 0;
 		LPARAM lparam = 0;
-		inline bool is_working() { return !is_idle(); }
-		inline bool is_idle() { return id == 0; }
+		bool is_working() { return !is_idle(); }
+		bool is_idle() { return id == 0; }
 
-		inline void set(uint32_t time, HWND hwnd, WPARAM wparam, LPARAM lparam) {
+		void set(uint32_t time, HWND hwnd, WPARAM wparam, LPARAM lparam) {
 			if (self == this) set_internal(time, hwnd, wparam, lparam);
 		}
-		inline void discard() { if (is_working()) discard_internal(); }
-		inline void operator()() { tick(); }
-		inline void tick() { if (is_working() && self == this) tick_internal(); }
+		void discard() { if (is_working()) discard_internal(); }
+		void operator()() { tick(); }
+		void tick() { if (is_working() && self == this) tick_internal(); }
 
 		void activate()
 		{
@@ -41,14 +41,14 @@ namespace OptimizeEditBox::delay_timer
 		}
 
 	private:
-		inline void set_internal(uint32_t time, HWND hw, WPARAM wp, LPARAM lp)
+		void set_internal(uint32_t time, HWND hw, WPARAM wp, LPARAM lp)
 		{
 			// note: specifying the same id with the existing timer prolongs the delay,
 			// even if it's not associated to a window handle.
 			hwnd = hw; wparam = wp; lparam = lp;
 			id = ::SetTimer(nullptr, id, time, TimerProc);
 		}
-		inline void discard_internal()
+		void discard_internal()
 		{
 			::KillTimer(nullptr, id);
 			id = 0;

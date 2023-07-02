@@ -135,13 +135,13 @@ namespace OptimizeEditBox
 
 	// exedit.auf を探してそのバージョンが 0.92 であることを確認，
 	// そのハンドルの数値化を返す．失敗したなら 0 を返す．		
-	static inline intptr_t find_exedit_auf_092(FILTER* fp)
+	static inline intptr_t find_exedit_auf_092(AviUtl::FilterPlugin* fp)
 	{
 		constexpr const char* exedit_092_info = "拡張編集(exedit) version 0.92 by ＫＥＮくん";
-		SYS_INFO si;
+		AviUtl::SysInfo si;
 		fp->exfunc->get_sys_info(nullptr, &si);
 		for (int i = 0; i < si.filter_n; i++) {
-			if (auto fp_other = reinterpret_cast<FILTER*>(fp->exfunc->get_filterp(i));
+			if (auto fp_other = reinterpret_cast<AviUtl::FilterPlugin*>(fp->exfunc->get_filterp(i));
 				fp_other->information != nullptr &&
 				std::strcmp(fp_other->information, exedit_092_info) == 0)
 				return reinterpret_cast<intptr_t>(fp_other->dll_hinst);
@@ -149,7 +149,7 @@ namespace OptimizeEditBox
 		return 0;
 	}
 
-	bool COptimizeEditBoxApp::func_init(FILTER* fp)
+	bool COptimizeEditBoxApp::func_init(AviUtl::FilterPlugin* fp)
 	{
 		auto exedit_auf = find_exedit_auf_092(fp);
 		if (exedit_auf == 0) {
@@ -234,7 +234,7 @@ namespace OptimizeEditBox
 		return initHook(exedit_auf);
 	}
 
-	bool COptimizeEditBoxApp::func_exit(FILTER* fp)
+	bool COptimizeEditBoxApp::func_exit(AviUtl::FilterPlugin* fp)
 	{
 		if (m_editBoxDelay > 0)
 			delay_timer::delay_timer::deactivate();

@@ -6,9 +6,10 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
+using byte = uint8_t;
 #pragma warning(push)
 #pragma warning(disable : 4819)	// suppress SJIS warnings.
-#include "aviutl_plugin_sdk/filter.h"
+#include <aviutl/FilterPlugin.hpp>
 #pragma warning(pop)
 
 #include "coloref_wrap.h"
@@ -22,7 +23,7 @@ namespace OptimizeEditBox
 		int32_t* m_is_playing; // 0: not playing, 1: playing.
 
 	public:
-		inline bool is_playing() { return *m_is_playing != 0; }
+		bool is_playing() { return *m_is_playing != 0; }
 
 		int m_editBoxDelay;
 		bool m_usesUnicodeInput;
@@ -62,8 +63,8 @@ namespace OptimizeEditBox
 		bool termHook();
 
 		bool DllMain(HINSTANCE instance, DWORD reason, void* reserved);
-		bool func_init(FILTER* fp);
-		bool func_exit(FILTER* fp);
+		bool func_init(AviUtl::FilterPlugin* fp);
+		bool func_exit(AviUtl::FilterPlugin* fp);
 	};
 
 	extern COptimizeEditBoxApp theApp;

@@ -15,24 +15,24 @@ namespace OptimizeEditBox
 		COLORREF val;
 
 	public:
-		constexpr inline colorref_wrap(const COLORREF& c) : val{ c } {}
-		constexpr inline colorref_wrap() : colorref_wrap{ COLORREF(-1) } {}
-		constexpr inline colorref_wrap(int32_t c) : colorref_wrap{ static_cast<COLORREF>(swap_02bytes(static_cast<uint32_t>(c))) } {}
+		constexpr colorref_wrap(const COLORREF& c) : val{ c } {}
+		constexpr colorref_wrap() : colorref_wrap{ COLORREF(-1) } {}
+		constexpr colorref_wrap(int32_t c) : colorref_wrap{ static_cast<COLORREF>(swap_02bytes(static_cast<uint32_t>(c))) } {}
 
-		constexpr inline operator int32_t() const { return static_cast<int32_t>(swap_02bytes(val)); }
-		constexpr inline operator COLORREF() const { return val; }
+		constexpr operator int32_t() const { return static_cast<int32_t>(swap_02bytes(val)); }
+		constexpr operator COLORREF() const { return val; }
 
-		constexpr inline colorref_wrap(const colorref_wrap& c) { *this = c; }
-		constexpr inline colorref_wrap& operator=(const colorref_wrap& c) {
+		constexpr colorref_wrap(const colorref_wrap& c) { *this = c; }
+		constexpr colorref_wrap& operator=(const colorref_wrap& c) {
 			val = c.val;
 			return *this;
 		}
 
-		constexpr inline operator bool() const { return is_valid(); }
-		constexpr inline bool is_none() const { return val >= 1u << 24; }
-		constexpr inline bool is_valid() const { return !is_none(); }
+		constexpr operator bool() const { return is_valid(); }
+		constexpr bool is_none() const { return val >= 1u << 24; }
+		constexpr bool is_valid() const { return !is_none(); }
 
-		constexpr static inline uint32_t swap_02bytes(uint32_t x) {
+		constexpr static uint32_t swap_02bytes(uint32_t x) {
 			return (0xff00ff00 & x) | (0x00ff00ff & std::rotl(x, 16));
 		}
 	};

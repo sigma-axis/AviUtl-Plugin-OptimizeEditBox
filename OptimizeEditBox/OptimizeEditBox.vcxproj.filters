@@ -1,22 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Common">
-      <UniqueIdentifier>{79bae488-39c4-4741-beda-1e2ee6428bed}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="AviUtl">
-      <UniqueIdentifier>{4d2e4585-d04a-4741-b8f7-db9c25dac0e5}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="OptimizeEditBox.h" />
     <ClInclude Include="OptimizeEditBox_Hook.h" />
     <ClInclude Include="coloref_wrap.h" />
     <ClInclude Include="delay_timer.h" />
     <ClInclude Include="editbox_predicatesh.h" />
-    <ClInclude Include="..\AviUtl\aviutl_plugin_sdk\filter.h">
-      <Filter>AviUtl</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="OptimizeEditBox.cpp" />

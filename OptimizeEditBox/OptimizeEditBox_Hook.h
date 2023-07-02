@@ -42,7 +42,7 @@ namespace OptimizeEditBox
 	// Api Hook
 
 	DECLARE_HOOK_PROC(BOOL, WINAPI, GetMessageA, (MSG* msg, HWND hwnd, UINT msgFilterMin, UINT msgFilterMax));
-	DECLARE_HOOK_PROC(void, CDECL, Exedit_FillGradation, (HDC dc, const RECT *rc, BYTE r, BYTE g, BYTE b, BYTE gr, BYTE gg, BYTE gb, int gs, int ge));
+	DECLARE_HOOK_PROC(void, CDECL, Exedit_FillGradation, (HDC dc, const RECT* rc, BYTE r, BYTE g, BYTE b, BYTE gr, BYTE gg, BYTE gb, int gs, int ge));
 	DECLARE_HOOK_PROC(LRESULT, WINAPI, Exedit_SettingDialog_WndProc, (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam));
 
 	void Exedit_DrawLineLeft(HDC dc, int mx, int my, int lx, int ly, HPEN pen);

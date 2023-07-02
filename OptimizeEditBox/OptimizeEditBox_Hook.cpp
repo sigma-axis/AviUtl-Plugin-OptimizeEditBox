@@ -14,12 +14,12 @@ namespace OptimizeEditBox
 
 	IMPLEMENT_HOOK_PROC(BOOL, WINAPI, GetMessageA, (MSG* msg, HWND hwnd, UINT msgFilterMin, UINT msgFilterMax))
 	{
-#if 1
+#if true
 		BOOL result = ::GetMessageW(msg, hwnd, msgFilterMin, msgFilterMax);
 #else
 		BOOL result = true_GetMessageA(msg, hwnd, msgFilterMin, msgFilterMax);
 #endif
-#if 1
+#if true
 		// 親ウィンドウを取得する。
 		HWND dlg = ::GetParent(msg->hwnd);
 		if (dlg == nullptr) return result;
@@ -44,7 +44,7 @@ namespace OptimizeEditBox
 					break;
 				}
 			}
-			/*		// ↑ この処理の分岐少ない版．
+			/*		// ↑ は，この処理 ↓ の分岐が少ない版．
 					if (msg->message == WM_KEYDOWN && msg->wParam == VK_ESCAPE)
 						goto discard_message;
 
@@ -137,7 +137,7 @@ namespace OptimizeEditBox
 	{
 		COLORREF color1 = RGB(r, g, b);
 		COLORREF color2 = RGB(gr, gg, gb);
-#if 1
+#if true
 		// 大雑把なグラデーション。
 		TwoColorsGradient(dc, rc, color1, color2, TRUE);
 #else
@@ -162,7 +162,7 @@ namespace OptimizeEditBox
 			TwoColorsGradient(dc, &rc3, color2, color2, TRUE);
 		}
 #endif
-#if 1
+#if true
 		// 枠も描画するならここを使う。
 		RECT rcFrame = *rc;
 		frameRect(dc, &rcFrame, theApp.m_outerColor, theApp.m_outerEdgeWidth, theApp.m_outerEdgeHeight);
