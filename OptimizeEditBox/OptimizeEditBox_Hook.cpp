@@ -3,7 +3,7 @@
 #include "OptimizeEditBox.h"
 #include "OptimizeEditBox_Hook.h"
 #include "delay_timer.h"
-#include "editbox_predicatesh.h"
+#include "editbox_predicates.h"
 
 #include <commctrl.h>
 #pragma comment(lib, "comctl32.lib")
@@ -29,8 +29,7 @@ namespace OptimizeEditBox
 			editbox_pred::check_style(msg->hwnd)) {
 
 			if (msg->message == WM_KEYDOWN) {
-				switch (msg->wParam)
-				{
+				switch (msg->wParam) {
 				case VK_ESCAPE:
 					// ESC キーでダイアログが非表示になるのを防ぐ．
 					goto discard_message;
@@ -202,8 +201,7 @@ namespace OptimizeEditBox
 
 		// WM_COMMAND 経由で通知メッセージが一定範囲のエディットボックスから送られてきたかチェック．
 		if (int id; message == WM_COMMAND && (id = LOWORD(wparam), check_id(id))) {
-			switch (int code = HIWORD(wparam))
-			{
+			switch (int code = HIWORD(wparam)) {
 			case EN_CHANGE:
 				// 通知メッセージ EN_CHANGE が送られてきた場合，
 				// それがユーザの現在入力対象か，そして最適化対象かをチェック．
@@ -241,10 +239,9 @@ namespace OptimizeEditBox
 
 	static LRESULT CALLBACK subclassproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR id, DWORD_PTR)
 	{
-		switch (msg)
-		{
+		switch (msg) {
 		case WM_SETFONT:
-			wparam = reinterpret_cast<WPARAM>(theApp.m_font);
+			wparam = reinterpret_cast<WPARAM>(theApp.m_font); // theApp.m_font is not null here.
 			[[fallthrough]];
 		case WM_DESTROY:
 			::RemoveWindowSubclass(hwnd, subclassproc, id);

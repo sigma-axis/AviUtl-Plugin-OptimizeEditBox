@@ -21,7 +21,7 @@ namespace OptimizeEditBox::editbox_pred
 	}
 	// ウィンドウクラスの名前一致を確認する関数．毎回 MAX_PATH 文字も確保しなくてもよい．
 	template<size_t N>
-	inline bool check_classname(HWND hwnd, const wchar_t(&name)[N])
+	inline bool check_classname(HWND hwnd, const wchar_t (&name)[N])
 	{
 		wchar_t buff[N + 1];
 		return ::GetClassNameW(hwnd, buff, std::size(buff)) == N - 1 && std::wcscmp(buff, name) == 0;

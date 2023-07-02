@@ -141,7 +141,7 @@ namespace OptimizeEditBox
 		AviUtl::SysInfo si;
 		fp->exfunc->get_sys_info(nullptr, &si);
 		for (int i = 0; i < si.filter_n; i++) {
-			if (auto fp_other = reinterpret_cast<AviUtl::FilterPlugin*>(fp->exfunc->get_filterp(i));
+			if (auto fp_other = fp->exfunc->get_filterp(i);
 				fp_other->information != nullptr &&
 				std::strcmp(fp_other->information, exedit_092_info) == 0)
 				return reinterpret_cast<intptr_t>(fp_other->dll_hinst);

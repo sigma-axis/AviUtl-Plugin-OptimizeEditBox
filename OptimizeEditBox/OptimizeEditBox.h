@@ -18,8 +18,7 @@ using byte = uint8_t;
 
 namespace OptimizeEditBox
 {
-	class COptimizeEditBoxApp
-	{
+	class COptimizeEditBoxApp {
 		int32_t* m_is_playing; // 0: not playing, 1: playing.
 
 	public:
