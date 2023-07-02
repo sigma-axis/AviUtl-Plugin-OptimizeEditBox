@@ -150,6 +150,8 @@ tabstopScriptEditBox=0 ; スクリプト制御のエディットボックス内�
 * GitHub - https://github.com/hebiiro
 * Twitter - https://twitter.com/io_hebiiro
 
+*改造版についての不具合報告等はオリジナル版の作成者ではなく，私 sigma-axis にまでご連絡ください．* [連絡先](#連絡・バグ報告)
+
 ## 免責事項
 
 この作成物および同梱物を使用したことによって生じたすべての障害・損害・不具合等に関しては、私と私の関係者および私の所属するいかなる団体・組織とも、一切の責任を負いません。各自の責任においてご使用ください。
@@ -204,3 +206,12 @@ AviUtl を使うたびに必ずお世話になっているプラグインです�
 
 加えてエディットボックスの Unicode 化の手法や各種関数のアドレスを探して上書きする手法は
 少なくとも私個人では見つけられませんでした．ソースコードを公開してくださったことにも重ねて感謝申し上げます．
+
+# 連絡・バグ報告
+
+*改造版についての不具合報告等はオリジナル版の作成者ではなく，私 sigma-axis にまでご連絡ください．*
+
+-	sigma-axis
+-	GitHub: https://github.com/sigma-axis
+-	Twitter: https://twitter.com/sigma_axis
+-	nicovideo: https://www.nicovideo.jp/user/51492481
