@@ -45,7 +45,9 @@ namespace OptimizeEditBox
 		m_tabstopTextEditBox{ 0 },
 		m_tabstopScriptEditBox{ 0 },
 
-		m_font{ nullptr }
+		m_font{ nullptr },
+
+		m_settingDialog { nullptr }
 	{}
 
 	bool COptimizeEditBoxApp::initHook(intptr_t exedit_auf)
@@ -59,6 +61,8 @@ namespace OptimizeEditBox
 			// turn on the timer.
 			delay_timer::Exedit_SettingDialog_WndProc.activate();
 		}
+
+		m_settingDialog = reinterpret_cast<decltype(m_settingDialog)>(exedit_auf + 0x1539C8);
 
 		if (m_usesGradientFill)
 			true_Exedit_FillGradation = reinterpret_cast<decltype(true_Exedit_FillGradation)>(exedit_auf + 0x00036a70);

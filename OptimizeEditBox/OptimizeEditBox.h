@@ -7,10 +7,7 @@
 #include <windows.h>
 
 using byte = uint8_t;
-#pragma warning(push)
-#pragma warning(disable : 4819)	// suppress SJIS warnings.
 #include <aviutl/FilterPlugin.hpp>
-#pragma warning(pop)
 
 #include "coloref_wrap.h"
 
@@ -53,6 +50,8 @@ namespace OptimizeEditBox
 		int m_tabstopScriptEditBox;
 
 		HFONT m_font;
+
+		HWND* m_settingDialog;
 
 	public:
 
