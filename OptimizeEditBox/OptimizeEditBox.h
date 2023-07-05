@@ -51,8 +51,6 @@ namespace OptimizeEditBox
 
 		HFONT m_font;
 
-		HWND* m_settingDialog;
-
 	public:
 
 		COptimizeEditBoxApp();

@@ -12,39 +12,7 @@ namespace OptimizeEditBox
 {
 	//---------------------------------------------------------------------
 
-	static bool IsTargetEditMessage(MSG* msg, HWND dlg)
-	{
-		// ウィンドウがエディットボックスか確認する。
-		if (!editbox_pred::check_classname(msg->hwnd, WC_EDITW)) return false;
-
-		// Ctrl + A.
-		if (theApp.m_usesCtrlA) {
-			if (msg->message == WM_KEYDOWN &&
-				msg->wParam == 'A' &&
-				::GetKeyState(VK_CONTROL) < 0) {
-				::SendMessageW(msg->hwnd, EM_SETSEL, 0, -1);
-				return true;
-			}
-		}
-
-		// テキストオブジェクトやスクリプト制御のエディットボックスなら ::IsDialogMessageW() を通さずに処理．
-		// これをしないと ESC キーでダイアログが非表示になったり，普通にタブ文字が入力できなくなる．
-		if (editbox_pred::check_style(msg->hwnd) &&
-			//editbox_pred::check_classname(dlg, L"ExtendedFilterClass") &&
-			dlg == *theApp.m_settingDialog &&
-			editbox_pred::check_id(::GetDlgCtrlID(msg->hwnd))) {
-			::TranslateMessage(msg);
-			::DispatchMessageW(msg);
-			return true;
-		}
-
-		// ダイアログメッセージを処理する。
-		if (::IsDialogMessageW(dlg, msg)) return true;
-
-		return false;
-	}
-
-	IMPLEMENT_HOOK_PROC(BOOL, WINAPI, GetMessageA, (MSG* msg, HWND hwnd, UINT msgFilterMin, UINT msgFilterMax))
+	BOOL WINAPI hook_ctrlA_GetMessageA(MSG* msg, HWND hwnd, UINT msgFilterMin, UINT msgFilterMax)
 	{
 #if true
 		BOOL result = ::GetMessageW(msg, hwnd, msgFilterMin, msgFilterMax);
@@ -52,16 +20,15 @@ namespace OptimizeEditBox
 		BOOL result = true_GetMessageA(msg, hwnd, msgFilterMin, msgFilterMax);
 #endif
 #if true
-		// 親ウィンドウを取得する。
-		HWND dlg = ::GetParent(msg->hwnd);
-		if (dlg == nullptr) return result;
+		// Ctrl + A.
+		if (msg->message == WM_KEYDOWN &&
+			msg->wParam == 'A' &&
+			::GetKeyState(VK_CONTROL) < 0 &&
+			editbox_pred::check_classname(msg->hwnd, WC_EDITW)) {
 
-		if (IsTargetEditMessage(msg, dlg)) {
-			// このメッセージはディスパッチしてはならないので WM_NULL に置き換える。
-			msg->hwnd = nullptr;
-			msg->message = WM_NULL;
-			msg->wParam = 0;
-			msg->lParam = 0;
+			// テキスト全選択して次のメッセージまで待機．
+			::SendMessageW(msg->hwnd, EM_SETSEL, 0, -1);
+			return hook_ctrlA_GetMessageA(msg, hwnd, msgFilterMin, msgFilterMax);
 		}
 #endif
 		return result;
@@ -251,10 +218,10 @@ namespace OptimizeEditBox
 		HWND hwnd = ::CreateWindowExW(exStyle, className, windowName,
 			style, x, y, w, h, parent, menu, instance, param);
 
+		if (tabstop > 0) ::SendMessageW(hwnd, EM_SETTABSTOPS, 1, reinterpret_cast<LPARAM>(&tabstop));
+
 		if (theApp.m_font != nullptr) ::SetWindowSubclass(hwnd, subclassproc,
 			reinterpret_cast<uintptr_t>(&theApp), 0);
-
-		if (tabstop > 0) ::SendMessageW(hwnd, EM_SETTABSTOPS, 1, reinterpret_cast<LPARAM>(&tabstop));
 		return hwnd;
 	}
 

@@ -45,9 +45,7 @@ namespace OptimizeEditBox
 		m_tabstopTextEditBox{ 0 },
 		m_tabstopScriptEditBox{ 0 },
 
-		m_font{ nullptr },
-
-		m_settingDialog { nullptr }
+		m_font{ nullptr }
 	{}
 
 	bool COptimizeEditBoxApp::initHook(intptr_t exedit_auf)
@@ -61,8 +59,6 @@ namespace OptimizeEditBox
 			// turn on the timer.
 			delay_timer::Exedit_SettingDialog_WndProc.activate();
 		}
-
-		m_settingDialog = reinterpret_cast<decltype(m_settingDialog)>(exedit_auf + 0x1539C8);
 
 		if (m_usesGradientFill)
 			true_Exedit_FillGradation = reinterpret_cast<decltype(true_Exedit_FillGradation)>(exedit_auf + 0x00036a70);
@@ -94,7 +90,11 @@ namespace OptimizeEditBox
 		DetourTransactionBegin();
 		DetourUpdateThread(::GetCurrentThread());
 
-		if (m_usesUnicodeInput) ATTACH_HOOK_PROC(GetMessageA);
+		if (m_usesUnicodeInput) {
+			if (m_usesCtrlA) hook_GetMessageA = hook_ctrlA_GetMessageA;
+			ATTACH_HOOK_PROC(GetMessageA);
+			ATTACH_HOOK_PROC(DispatchMessageA);
+		}
 		if (m_usesGradientFill) ATTACH_HOOK_PROC(Exedit_FillGradation);
 
 		if (DetourTransactionCommit() != NO_ERROR) return false;
@@ -107,7 +107,10 @@ namespace OptimizeEditBox
 		DetourTransactionBegin();
 		DetourUpdateThread(::GetCurrentThread());
 
-		if (m_usesUnicodeInput) DETACH_HOOK_PROC(GetMessageA);
+		if (m_usesUnicodeInput) {
+			DETACH_HOOK_PROC(GetMessageA);
+			DETACH_HOOK_PROC(DispatchMessageA);
+		}
 		if (m_usesGradientFill) DETACH_HOOK_PROC(Exedit_FillGradation);
 
 		if (DetourTransactionCommit() != NO_ERROR) return false;
