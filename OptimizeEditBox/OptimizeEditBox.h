@@ -9,8 +9,6 @@
 using byte = uint8_t;
 #include <aviutl/FilterPlugin.hpp>
 
-#include "coloref_wrap.h"
-
 //---------------------------------------------------------------------
 
 namespace OptimizeEditBox
@@ -26,23 +24,23 @@ namespace OptimizeEditBox
 		bool m_usesCtrlA;
 		bool m_usesGradientFill;
 
-		colorref_wrap m_innerColor;
+		COLORREF m_innerColor;
 		int m_innerEdgeWidth;
 		int m_innerEdgeHeight;
 
-		colorref_wrap m_outerColor;
+		COLORREF m_outerColor;
 		int m_outerEdgeWidth;
 		int m_outerEdgeHeight;
 
-		colorref_wrap m_selectionColor;
-		colorref_wrap m_selectionEdgeColor;
-		colorref_wrap m_selectionBkColor;
+		COLORREF m_selectionColor;
+		COLORREF m_selectionEdgeColor;
+		COLORREF m_selectionBkColor;
 
-		colorref_wrap m_layerBorderLeftColor;
-		colorref_wrap m_layerBorderRightColor;
-		colorref_wrap m_layerBorderTopColor;
-		colorref_wrap m_layerBorderBottomColor;
-		colorref_wrap m_layerSeparatorColor;
+		COLORREF m_layerBorderLeftColor;
+		COLORREF m_layerBorderRightColor;
+		COLORREF m_layerBorderTopColor;
+		COLORREF m_layerBorderBottomColor;
+		COLORREF m_layerSeparatorColor;
 
 		int m_addTextEditBoxHeight;
 		int m_addScriptEditBoxHeight;

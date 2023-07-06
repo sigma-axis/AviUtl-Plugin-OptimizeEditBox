@@ -30,15 +30,15 @@ namespace OptimizeEditBox
 		m_outerEdgeWidth{ 1 },
 		m_outerEdgeHeight{ 1 },
 
-		m_selectionColor{},
-		m_selectionEdgeColor{},
-		m_selectionBkColor{},
+		m_selectionColor{ CLR_INVALID },
+		m_selectionEdgeColor{ CLR_INVALID },
+		m_selectionBkColor{ CLR_INVALID },
 
-		m_layerBorderLeftColor{},
-		m_layerBorderRightColor{},
-		m_layerBorderTopColor{},
-		m_layerBorderBottomColor{},
-		m_layerSeparatorColor{},
+		m_layerBorderLeftColor{ CLR_INVALID },
+		m_layerBorderRightColor{ CLR_INVALID },
+		m_layerBorderTopColor{ CLR_INVALID },
+		m_layerBorderBottomColor{ CLR_INVALID },
+		m_layerSeparatorColor{ CLR_INVALID },
 
 		m_addTextEditBoxHeight{ 0 },
 		m_addScriptEditBoxHeight{ 0 },
@@ -61,17 +61,17 @@ namespace OptimizeEditBox
 		}
 
 		if (m_usesGradientFill)
-			true_Exedit_FillGradation = reinterpret_cast<decltype(true_Exedit_FillGradation)>(exedit_auf + 0x00036a70);
+			true_Exedit_FillGradation = reinterpret_cast< decltype(true_Exedit_FillGradation)>(exedit_auf + 0x00036a70);
 
-		if (m_layerBorderLeftColor.is_valid()) hookCall(exedit_auf + 0x00038845, Exedit_DrawLineLeft);
-		if (m_layerBorderRightColor.is_valid()) hookCall(exedit_auf + 0x000388AA, Exedit_DrawLineRight);
-		if (m_layerBorderTopColor.is_valid()) hookCall(exedit_auf + 0x00038871, Exedit_DrawLineTop);
-		if (m_layerBorderBottomColor.is_valid()) hookCall(exedit_auf + 0x000388DA, Exedit_DrawLineBottom);
-		if (m_layerSeparatorColor.is_valid()) hookCall(exedit_auf + 0x00037A1F, Exedit_DrawLineSeparator);
+		if (m_layerBorderLeftColor	!= CLR_INVALID) hookCall(exedit_auf + 0x00038845, Exedit_DrawLineLeft);
+		if (m_layerBorderRightColor	!= CLR_INVALID) hookCall(exedit_auf + 0x000388AA, Exedit_DrawLineRight);
+		if (m_layerBorderTopColor	!= CLR_INVALID) hookCall(exedit_auf + 0x00038871, Exedit_DrawLineTop);
+		if (m_layerBorderBottomColor!= CLR_INVALID) hookCall(exedit_auf + 0x000388DA, Exedit_DrawLineBottom);
+		if (m_layerSeparatorColor	!= CLR_INVALID) hookCall(exedit_auf + 0x00037A1F, Exedit_DrawLineSeparator);
 
-		if (m_selectionColor.is_valid()) writeAbsoluteAddress(exedit_auf + 0x0003807E, &m_selectionColor);
-		if (m_selectionEdgeColor.is_valid()) writeAbsoluteAddress(exedit_auf + 0x00038076, &m_selectionEdgeColor);
-		if (m_selectionBkColor.is_valid()) writeAbsoluteAddress(exedit_auf + 0x00038087, &m_selectionBkColor);
+		if (m_selectionColor		!= CLR_INVALID) writeAbsoluteAddress(exedit_auf + 0x0003807E, &m_selectionColor);
+		if (m_selectionEdgeColor	!= CLR_INVALID) writeAbsoluteAddress(exedit_auf + 0x00038076, &m_selectionEdgeColor);
+		if (m_selectionBkColor		!= CLR_INVALID) writeAbsoluteAddress(exedit_auf + 0x00038087, &m_selectionBkColor);
 
 		if (m_addTextEditBoxHeight != 0 || m_tabstopTextEditBox > 0 || m_font != nullptr)
 		{
@@ -170,43 +170,46 @@ namespace OptimizeEditBox
 		::GetModuleFileNameA(fp->dll_hinst, path, std::size(path));
 		::PathRenameExtensionA(path, ".ini");
 
-#define read_ini_val(key, def)	static_cast<int32_t>(			\
-	::GetPrivateProfileIntA("Settings", key, static_cast<int32_t>(def), path))
-#define read_config(name)										\
-	if constexpr (std::is_same_v<bool, decltype(m_##name)>)		\
-		m_##name = read_ini_val(#name, m_##name ? 1 : 0) != 0;	\
-	else m_##name = static_cast<decltype(m_##name)>(read_ini_val(#name, m_##name))
+		constexpr auto swap_byte_02 = [](auto x) -> decltype(x) {
+			return (0xff00ff00 & x) | (0x00ff00ff & std::rotl(x, 16));
+		};
+		auto read_ini_val = [&](const char* key, auto def) -> decltype(def) {
+			return ::GetPrivateProfileIntA("Settings", key, static_cast<int>(def), path);
+		};
+#define load_integer(name)	m_##name = read_ini_val(#name, m_##name)
+#define load_boolean(name)	m_##name = read_ini_val(#name, m_##name ? 1 : 0) != 0
+#define load_color(name)	m_##name = swap_byte_02(read_ini_val(#name, swap_byte_02(m_##name)))
 
-		read_config(editBoxDelay);
-		read_config(usesUnicodeInput);
-		read_config(usesCtrlA);
-		read_config(usesGradientFill);
+		load_integer(editBoxDelay);
+		load_boolean(usesUnicodeInput);
+		load_boolean(usesCtrlA);
+		load_boolean(usesGradientFill);
 
 		if (m_usesGradientFill) {
-			read_config(innerColor);
-			read_config(innerEdgeWidth);
-			read_config(innerEdgeHeight);
+			load_color(innerColor);
+			load_integer(innerEdgeWidth);
+			load_integer(innerEdgeHeight);
 
-			read_config(outerColor);
-			read_config(outerEdgeWidth);
-			read_config(outerEdgeHeight);
+			load_color(outerColor);
+			load_integer(outerEdgeWidth);
+			load_integer(outerEdgeHeight);
 		}
 
-		read_config(selectionColor);
-		read_config(selectionEdgeColor);
-		read_config(selectionBkColor);
+		load_color(selectionColor);
+		load_color(selectionEdgeColor);
+		load_color(selectionBkColor);
 
-		read_config(layerBorderLeftColor);
-		read_config(layerBorderRightColor);
-		read_config(layerBorderTopColor);
-		read_config(layerBorderBottomColor);
-		read_config(layerSeparatorColor);
+		load_color(layerBorderLeftColor);
+		load_color(layerBorderRightColor);
+		load_color(layerBorderTopColor);
+		load_color(layerBorderBottomColor);
+		load_color(layerSeparatorColor);
 
-		read_config(addTextEditBoxHeight);
-		read_config(addScriptEditBoxHeight);
-		read_config(tabstopTextEditBox);
+		load_integer(addTextEditBoxHeight);
+		load_integer(addScriptEditBoxHeight);
+		load_integer(tabstopTextEditBox);
 		m_tabstopTextEditBox = std::max(0, m_tabstopTextEditBox);
-		read_config(tabstopScriptEditBox);
+		load_integer(tabstopScriptEditBox);
 		m_tabstopScriptEditBox = std::max(0, m_tabstopScriptEditBox);
 
 		// フォント名はワイド文字に変換してから CreateFontW() する．
