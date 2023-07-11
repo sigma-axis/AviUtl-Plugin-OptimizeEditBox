@@ -92,12 +92,12 @@ namespace OptimizeEditBox
 	// 現在選択オブジェクトの場合に色設定を一時的に切り替える．
 	IMPLEMENT_HOOK_PROC_NULL(void, __cdecl, DrawObject, (HDC dc, int32_t ObjectIndex))
 	{
-		if (ObjectIndex == theApp.SelectedObjectIndex()) {
+		if (ObjectIndex == theApp.SelectedObjectIndex()) [[unlikely]] {
 			frame_data = &theApp.m_selectedFrame;
 			true_DrawObject(dc, ObjectIndex);
 			frame_data = &theApp.m_objectFrame;
 		}
-		else true_DrawObject(dc, ObjectIndex);
+		else [[likely]] true_DrawObject(dc, ObjectIndex);
 	}
 
 	namespace hooks_Exedit_FillGradation
@@ -124,15 +124,15 @@ namespace OptimizeEditBox
 			// https://github.com/ePi5131/patch.aul/blob/d46adbf95c87e52fe021222aea02837fdd03a6ef/patch/patch_fast_exeditwindow.cpp#L28
 			// オーバーフロー対策は 64 bit に伸長するのではなく，予め下位ビットを切り落としておく方針に．
 
-			if (rc->right <= g_begin) fill_rect(dc, *rc, RGB(r1, g1, b1));
-			else if (g_end <= rc->left) fill_rect(dc, *rc, RGB(r2, g2, b2));
-			else if (g_begin >= g_end)
+			if (rc->right <= g_begin) [[unlikely]] fill_rect(dc, *rc, RGB(r1, g1, b1));
+			else if (g_end <= rc->left) [[unlikely]] fill_rect(dc, *rc, RGB(r2, g2, b2));
+			else if (g_begin >= g_end) [[unlikely]]
 				split_fill(dc, *rc, g_begin, RGB(r1, g1, b1), RGB(r2, g2, b2));
-			else {
+			else [[likely]] {
 				// denominate some bits to prevent overflows in later calculations.
 				int c_left = rc->left, c_right = rc->right,
 					c_begin = g_begin, c_end = g_end;
-				if (auto l = std::bit_width(static_cast<uint32_t>(c_end - c_begin)); l > 15) {
+				if (auto l = std::bit_width(static_cast<uint32_t>(c_end - c_begin)); l > 15) [[unlikely]] {
 					l -= 15;
 					c_left >>= l; c_right >>= l;
 					c_begin >>= l; c_end >>= l;
@@ -193,11 +193,11 @@ namespace OptimizeEditBox
 			// case of steps >= 2.
 			const int grad_steps = theApp.m_gradientSteps;
 
-			if (rc->right <= g_begin) fill_rect(dc, *rc, RGB(r1, g1, b1));
-			else if (g_end <= rc->left) fill_rect(dc, *rc, RGB(r2, g2, b2));
-			else if (g_end <= g_begin)
+			if (rc->right <= g_begin) [[unlikely]] fill_rect(dc, *rc, RGB(r1, g1, b1));
+			else if (g_end <= rc->left) [[unlikely]] fill_rect(dc, *rc, RGB(r2, g2, b2));
+			else if (g_end <= g_begin) [[unlikely]]
 				split_fill(dc, *rc, g_begin, RGB(r1, g1, b1), RGB(r2, g2, b2));
-			else {
+			else [[likely]] {
 				RECT step{ .top = rc->top, .right = rc->left, .bottom = rc->bottom };
 				auto g_len = static_cast<int64_t>(g_end) - g_begin; // extend to 64 bits to avoid overflowing.
 				auto r_diff = r2 - r1, g_diff = g2 - g1, b_diff = b2 - b1;

@@ -20,7 +20,7 @@ namespace OptimizeEditBox
 		if (msg->message == WM_KEYDOWN &&
 			msg->wParam == 'A' &&
 			::GetKeyState(VK_CONTROL) < 0 &&
-			editbox_pred::check_classname(msg->hwnd, WC_EDITW)) {
+			editbox_pred::check_classname(msg->hwnd, WC_EDITW)) [[unlikely]] {
 
 			// テキスト全選択して次のメッセージまで待機．
 			::SendMessageW(msg->hwnd, EM_SETSEL, 0, -1);
@@ -35,7 +35,7 @@ namespace OptimizeEditBox
 		using namespace editbox_pred;
 
 		// WM_COMMAND 経由で通知メッセージが一定範囲のエディットボックスから送られてきたかチェック．
-		if (int id; message == WM_COMMAND && (id = LOWORD(wparam), check_id(id))) {
+		if (int id; message == WM_COMMAND && (id = LOWORD(wparam), check_id(id))) [[unlikely]] {
 			switch (int code = HIWORD(wparam)) {
 			case EN_CHANGE:
 				// 通知メッセージ EN_CHANGE が送られてきた場合，

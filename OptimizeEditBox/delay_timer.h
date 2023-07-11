@@ -25,11 +25,15 @@ namespace OptimizeEditBox::delay_timer
 		bool is_idle() { return id == 0; }
 
 		void set(uint32_t time, HWND hwnd, WPARAM wparam, LPARAM lparam) {
-			if (self == this) set_internal(time, hwnd, wparam, lparam);
+			if (self == this) [[likely]] set_internal(time, hwnd, wparam, lparam);
 		}
 		void discard() { if (is_working()) discard_internal(); }
 		void operator()() { tick(); }
-		void tick() { if (is_working() && self == this) tick_internal(); }
+		void tick() {
+			if (is_working()) {
+				if (self == this) [[likely]] tick_internal();
+			}
+		}
 
 		void activate()
 		{
@@ -40,8 +44,8 @@ namespace OptimizeEditBox::delay_timer
 		{
 			if (self != nullptr) {
 				self->discard();
-			self = nullptr;
-		}
+				self = nullptr;
+			}
 		}
 
 	private:
@@ -66,7 +70,8 @@ namespace OptimizeEditBox::delay_timer
 		// ideally, there desired a mapping {id's} -> {timers}.
 		inline static delay_timer* self = nullptr; // also working as a "main switch".
 		static void CALLBACK TimerProc(auto, auto, Id id, auto) {
-			if (self != nullptr && id == self->id) self->tick_internal();
+			if (self != nullptr && id == self->id)
+				[[likely]] self->tick_internal();
 			else ::KillTimer(nullptr, id);
 		}
 	} Exedit_SettingDialog_WndProc;
