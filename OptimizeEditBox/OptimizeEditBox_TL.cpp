@@ -1,7 +1,7 @@
 #include <cmath>
 
-#include "OptimizeEditBox.h"
-#include "OptimizeEditBox_Hook.h"
+#include "OptimizeEditBox.hpp"
+#include "OptimizeEditBox_Hook.hpp"
 
 //---------------------------------------------------------------------
 

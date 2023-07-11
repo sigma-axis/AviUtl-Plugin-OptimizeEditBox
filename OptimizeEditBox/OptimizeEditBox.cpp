@@ -1,8 +1,8 @@
 ﻿#include <array>
 
-#include "OptimizeEditBox.h"
-#include "OptimizeEditBox_Hook.h"
-#include "delay_timer.h"
+#include "OptimizeEditBox.hpp"
+#include "OptimizeEditBox_Hook.hpp"
+#include "delay_timer.hpp"
 #include "frame_color.hpp"
 
 #include <Shlwapi.h>

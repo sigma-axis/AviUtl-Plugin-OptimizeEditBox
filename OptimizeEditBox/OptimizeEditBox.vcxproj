@@ -104,11 +104,11 @@
     <PostBuildEvent />
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="delay_timer.h" />
-    <ClInclude Include="editbox_predicates.h" />
+    <ClInclude Include="delay_timer.hpp" />
+    <ClInclude Include="editbox_predicates.hpp" />
     <ClInclude Include="frame_color.hpp" />
-    <ClInclude Include="OptimizeEditBox.h" />
-    <ClInclude Include="OptimizeEditBox_Hook.h" />
+    <ClInclude Include="OptimizeEditBox.hpp" />
+    <ClInclude Include="OptimizeEditBox_Hook.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="OptimizeEditBox.cpp" />
