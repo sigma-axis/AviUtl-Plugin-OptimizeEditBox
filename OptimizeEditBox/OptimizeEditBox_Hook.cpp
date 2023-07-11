@@ -5,21 +5,17 @@
 #include "delay_timer.h"
 #include "editbox_predicates.h"
 
-#include <commctrl.h>
-#pragma comment(lib, "comctl32.lib")
+#include <CommCtrl.h>
+#pragma comment(lib, "comctl32")
+
+//---------------------------------------------------------------------
 
 namespace OptimizeEditBox
 {
-	//---------------------------------------------------------------------
-
 	BOOL WINAPI hook_ctrlA_GetMessageA(MSG* msg, HWND hwnd, UINT msgFilterMin, UINT msgFilterMax)
 	{
-#if true
-		BOOL result = ::GetMessageW(msg, hwnd, msgFilterMin, msgFilterMax);
-#else
-		BOOL result = true_GetMessageA(msg, hwnd, msgFilterMin, msgFilterMax);
-#endif
-#if true
+		auto result = ::GetMessageW(msg, hwnd, msgFilterMin, msgFilterMax);
+
 		// Ctrl + A.
 		if (msg->message == WM_KEYDOWN &&
 			msg->wParam == 'A' &&
@@ -30,128 +26,8 @@ namespace OptimizeEditBox
 			::SendMessageW(msg->hwnd, EM_SETSEL, 0, -1);
 			return hook_ctrlA_GetMessageA(msg, hwnd, msgFilterMin, msgFilterMax);
 		}
-#endif
+
 		return result;
-	}
-
-	// http://iooiau.net/tips/web20back.html
-	// 2色のグラデーションを描画する関数です
-	static bool TwoColorsGradient(
-		HDC hdc,            // 描画先のデバイスコンテキスト・ハンドルです
-		const RECT* pRect,  // 描画する範囲の矩形です
-		COLORREF Color1,    // 描画する一つ目の色です
-		COLORREF Color2,    // 描画する二つ目の色です
-		bool fHorizontal    // 水平のグラデーションを描画する場合は TRUE にします
-	)
-	{
-		// 描画範囲と色を設定します
-		TRIVERTEX vert[] = {
-			{
-				.x = pRect->left,
-				.y = pRect->top,
-				.Red = static_cast<uint16_t>(GetRValue(Color1) << 8),
-				.Green = static_cast<uint16_t>(GetGValue(Color1) << 8),
-				.Blue = static_cast<uint16_t>(GetBValue(Color1) << 8),
-				.Alpha = 0,
-			},
-			{
-				.x = pRect->right,
-				.y = pRect->bottom,
-				.Red = static_cast<uint16_t>(GetRValue(Color2) << 8),
-				.Green = static_cast<uint16_t>(GetGValue(Color2) << 8),
-				.Blue = static_cast<uint16_t>(GetBValue(Color2) << 8),
-				.Alpha = 0,
-			},
-		};
-		GRADIENT_RECT rect = { 0, 1 };
-
-		// note: ::GradientFill() -> ::GdiGradientFill() に差し替え．.lib を減らせる．
-		return ::GdiGradientFill(hdc, vert, 2, &rect, 1,
-			fHorizontal ? GRADIENT_FILL_RECT_H : GRADIENT_FILL_RECT_V);
-	}
-
-	static void frameRect(HDC dc, const RECT* rc, COLORREF color, int edgeWidth, int edgeHeight)
-	{
-		int x = rc->left;
-		int y = rc->top;
-		int w = rc->right - rc->left;
-		int h = rc->bottom - rc->top;
-
-		auto oldBrush = ::SelectObject(dc, ::CreateSolidBrush(color));
-		if (edgeHeight > 0)
-		{
-			::PatBlt(dc, x, y, w, edgeHeight, PATCOPY);
-			::PatBlt(dc, x, y + h, w, -edgeHeight, PATCOPY);
-		}
-		if (edgeWidth > 0)
-		{
-			::PatBlt(dc, x, y, edgeWidth, h, PATCOPY);
-			::PatBlt(dc, x + w, y, -edgeWidth, h, PATCOPY);
-		}
-		::DeleteObject(::SelectObject(dc, oldBrush));
-	}
-
-	IMPLEMENT_HOOK_PROC_NULL(void, CDECL, Exedit_FillGradation, (HDC dc, const RECT* rc, BYTE r, BYTE g, BYTE b, BYTE gr, BYTE gg, BYTE gb, int gs, int ge))
-	{
-		COLORREF color1 = RGB(r, g, b);
-		COLORREF color2 = RGB(gr, gg, gb);
-#if true
-		// 大雑把なグラデーション。
-		TwoColorsGradient(dc, rc, color1, color2, TRUE);
-#else
-		// デフォルト処理に近いグラデーション。
-		if (gs == 0 && ge == 0)
-		{
-			TwoColorsGradient(dc, rc, color1, color1, TRUE);
-		}
-		else
-		{
-			RECT rc1 = *rc;
-			rc1.right = gs;
-			TwoColorsGradient(dc, &rc1, color1, color1, TRUE);
-
-			RECT rc2 = *rc;
-			rc2.left = gs;
-			rc2.right = ge;
-			TwoColorsGradient(dc, &rc2, color1, color2, TRUE);
-
-			RECT rc3 = *rc;
-			rc3.left = ge;
-			TwoColorsGradient(dc, &rc3, color2, color2, TRUE);
-		}
-#endif
-#if true
-		// 枠も描画するならここを使う。
-		RECT rcFrame = *rc;
-		frameRect(dc, &rcFrame, theApp.m_outerColor, theApp.m_outerEdgeWidth, theApp.m_outerEdgeHeight);
-		::InflateRect(&rcFrame, -theApp.m_outerEdgeWidth, -theApp.m_outerEdgeHeight);
-		frameRect(dc, &rcFrame, theApp.m_innerColor, theApp.m_innerEdgeWidth, theApp.m_innerEdgeHeight);
-#endif
-	}
-
-	static void draw_colored_rect(COLORREF color, HDC dc, int x, int y, int w, int h, HPEN pen)
-	{
-		if (pen != nullptr) ::SelectObject(dc, pen);
-		if (color == CLR_NONE) return;
-		auto oldBrush = ::SelectObject(dc, ::CreateSolidBrush(color));
-		::PatBlt(dc, x, y, w, h, PATCOPY);
-		::DeleteObject(::SelectObject(dc, oldBrush));
-	}
-
-	void Exedit_DrawLineLeft(HDC dc, int mx, int my, int lx, int ly, HPEN pen) {
-		draw_colored_rect(theApp.m_layerBorderLeftColor, dc, mx, my, 1, ly - my, pen);
-	}
-	void Exedit_DrawLineRight(HDC dc, int mx, int my, int lx, int ly, HPEN pen) {
-		draw_colored_rect(theApp.m_layerBorderRightColor, dc, mx, my, 1, ly - my, pen);
-	}
-	void Exedit_DrawLineTop(HDC dc, int mx, int my, int lx, int ly, HPEN pen) {
-		draw_colored_rect(theApp.m_layerBorderTopColor, dc, mx, my, lx - my, 1, pen);
-	}
-	void Exedit_DrawLineBottom(HDC dc, int mx, int my, int lx, int ly, HPEN pen) {
-		draw_colored_rect(theApp.m_layerBorderBottomColor, dc, mx, my, lx - my, 1, pen);
-	}
-	void Exedit_DrawLineSeparator(HDC dc, int mx, int my, int lx, int ly, HPEN pen) {
-		draw_colored_rect(theApp.m_layerSeparatorColor, dc, mx, my, 1, ly - my, pen);
 	}
 
 	IMPLEMENT_HOOK_PROC_NULL(LRESULT, WINAPI, Exedit_SettingDialog_WndProc, (HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam))
@@ -226,7 +102,7 @@ namespace OptimizeEditBox
 	}
 
 	HWND WINAPI Exedit_CreateTextEditBox(DWORD exStyle, LPCWSTR className, LPCWSTR windowName,
-		DWORD style, int x, int y, int w, int h,
+		DWORD style, int32_t x, int32_t y, int32_t w, int32_t h,
 		HWND parent, HMENU menu, HINSTANCE instance, void* param)
 	{
 		return Exedit_CreateEditBox(theApp.m_tabstopTextEditBox, exStyle, className, windowName,
@@ -234,7 +110,7 @@ namespace OptimizeEditBox
 	}
 
 	HWND WINAPI Exedit_CreateScriptEditBox(DWORD exStyle, LPCWSTR className, LPCWSTR windowName,
-		DWORD style, int x, int y, int w, int h,
+		DWORD style, int32_t x, int32_t y, int32_t w, int32_t h,
 		HWND parent, HMENU menu, HINSTANCE instance, void* param)
 	{
 		return Exedit_CreateEditBox(theApp.m_tabstopScriptEditBox, exStyle, className, windowName,

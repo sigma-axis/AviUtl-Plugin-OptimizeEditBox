@@ -4,64 +4,65 @@
 
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+#include <Windows.h>
 
 using byte = uint8_t;
 #include <aviutl/FilterPlugin.hpp>
+
+#include "frame_color.hpp"
 
 //---------------------------------------------------------------------
 
 namespace OptimizeEditBox
 {
-	class COptimizeEditBoxApp {
-		int32_t* m_is_playing; // 0: not playing, 1: playing.
+	inline constinit class COptimizeEditBoxApp {
+		int32_t* m_is_playing{ nullptr }; // 0: not playing, 1: playing.
+		int32_t* m_SelectedObjectIndex{ nullptr };
 
 	public:
 		bool is_playing() { return *m_is_playing != 0; }
+		int32_t SelectedObjectIndex() { return *m_SelectedObjectIndex; }
 
-		int m_editBoxDelay;
-		bool m_usesUnicodeInput;
-		bool m_usesCtrlA;
-		bool m_usesGradientFill;
+		int m_editBoxDelay{ 0 };
+		bool m_usesUnicodeInput{ false };
+		bool m_usesCtrlA{ false };
+		bool m_usesGradientFill{ false };
+		bool m_hideDotOutline{ false };
 
-		COLORREF m_innerColor;
-		int m_innerEdgeWidth;
-		int m_innerEdgeHeight;
+		int m_addTextEditBoxHeight{ 0 };
+		int m_addScriptEditBoxHeight{ 0 };
+		int m_tabstopTextEditBox{ 0 };
+		int m_tabstopScriptEditBox{ 0 };
 
-		COLORREF m_outerColor;
-		int m_outerEdgeWidth;
-		int m_outerEdgeHeight;
+		HFONT m_font{ nullptr };
 
-		COLORREF m_selectionColor;
-		COLORREF m_selectionEdgeColor;
-		COLORREF m_selectionBkColor;
+		timeline::obj_frame m_objectFrame{
+			.outer{ 0x000000, 1, 1, 1, 1 },
+			.inner{ 0xffffff, 1, 1, 1, 1 },
+		}, m_selectedFrame{};
 
-		COLORREF m_layerBorderLeftColor;
-		COLORREF m_layerBorderRightColor;
-		COLORREF m_layerBorderTopColor;
-		COLORREF m_layerBorderBottomColor;
-		COLORREF m_layerSeparatorColor;
+			int m_gradientSteps{ -1 };
 
-		int m_addTextEditBoxHeight;
-		int m_addScriptEditBoxHeight;
-		int m_tabstopTextEditBox;
-		int m_tabstopScriptEditBox;
+			COLORREF m_selectionColor{ CLR_INVALID };
+			COLORREF m_selectionEdgeColor{ CLR_INVALID };
+			COLORREF m_selectionBkColor{ CLR_INVALID };
 
-		HFONT m_font;
+			COLORREF m_layerBorderLeftColor{ CLR_INVALID };
+			COLORREF m_layerBorderRightColor{ CLR_INVALID };
+			COLORREF m_layerBorderTopColor{ CLR_INVALID };
+			COLORREF m_layerBorderBottomColor{ CLR_INVALID };
+			COLORREF m_layerSeparatorColor{ CLR_INVALID };
 
-	public:
-
-		COptimizeEditBoxApp();
-
+	private:
 		bool initHook(intptr_t exedit_auf);
 		bool termHook();
+		void loadSettings(const char* ini_file);
 
+	public:
 		bool DllMain(HINSTANCE instance, DWORD reason, void* reserved);
 		bool func_init(AviUtl::FilterPlugin* fp);
 		bool func_exit(AviUtl::FilterPlugin* fp);
-	};
-
-	extern COptimizeEditBoxApp theApp;
+	} theApp;
 }
 
 //---------------------------------------------------------------------

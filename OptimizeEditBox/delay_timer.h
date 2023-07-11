@@ -4,9 +4,11 @@
 
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+#include <Windows.h>
 
 #include "OptimizeEditBox_Hook.h"
+
+//---------------------------------------------------------------------
 
 namespace OptimizeEditBox::delay_timer
 {
@@ -36,8 +38,10 @@ namespace OptimizeEditBox::delay_timer
 		}
 		static void deactivate()
 		{
-			if (self != nullptr) self->discard();
+			if (self != nullptr) {
+				self->discard();
 			self = nullptr;
+		}
 		}
 
 	private:

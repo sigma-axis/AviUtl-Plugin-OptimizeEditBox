@@ -1,8 +1,10 @@
 ﻿#pragma once
 
+#include <type_traits>
+
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+#include <Windows.h>
 
 #include "../Detours.4.0.1/detours.h"
 #pragma comment(lib, "../Detours.4.0.1/detours.lib")
@@ -43,19 +45,35 @@ namespace OptimizeEditBox
 
 	inline auto true_GetMessageA = GetMessageA, hook_GetMessageA = GetMessageW;
 	decltype(GetMessageA) hook_ctrlA_GetMessageA;
+
 	inline auto true_DispatchMessageA = DispatchMessageA;
 	constexpr auto hook_DispatchMessageA = DispatchMessageW;
-	DECLARE_HOOK_PROC(void, CDECL, Exedit_FillGradation, (HDC dc, const RECT* rc, BYTE r, BYTE g, BYTE b, BYTE gr, BYTE gg, BYTE gb, int gs, int ge));
+
+	namespace hooks_Exedit_FillGradation
+	{
+		using type = void __cdecl(HDC, const RECT*,
+			int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t);
+		using ptr = type*;
+		type simple, original, solid, steps;
+	}
+	inline hooks_Exedit_FillGradation::ptr
+		hook_Exedit_FillGradation = nullptr, true_Exedit_FillGradation = nullptr;
+
+	DECLARE_HOOK_PROC(void, __cdecl, DrawObject, (HDC dc, int32_t ObjectIndex));
 	DECLARE_HOOK_PROC(LRESULT, WINAPI, Exedit_SettingDialog_WndProc, (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam));
 
-	void Exedit_DrawLineLeft(HDC dc, int mx, int my, int lx, int ly, HPEN pen);
-	void Exedit_DrawLineRight(HDC dc, int mx, int my, int lx, int ly, HPEN pen);
-	void Exedit_DrawLineTop(HDC dc, int mx, int my, int lx, int ly, HPEN pen);
-	void Exedit_DrawLineBottom(HDC dc, int mx, int my, int lx, int ly, HPEN pen);
-	void Exedit_DrawLineSeparator(HDC dc, int mx, int my, int lx, int ly, HPEN pen);
+	void Exedit_DrawLineLeft(HDC dc, int32_t mx, int32_t my, int32_t lx, int32_t ly, HPEN pen);
+	void Exedit_DrawLineRight(HDC dc, int32_t mx, int32_t my, int32_t lx, int32_t ly, HPEN pen);
+	void Exedit_DrawLineTop(HDC dc, int32_t mx, int32_t my, int32_t lx, int32_t ly, HPEN pen);
+	void Exedit_DrawLineBottom(HDC dc, int32_t mx, int32_t my, int32_t lx, int32_t ly, HPEN pen);
+	void Exedit_DrawLineSeparator(HDC dc, int32_t mx, int32_t my, int32_t lx, int32_t ly, HPEN pen);
 
-	HWND WINAPI Exedit_CreateTextEditBox(DWORD exStyle, LPCWSTR className, LPCWSTR windowName, DWORD style, int x, int y, int w, int h, HWND parent, HMENU menu, HINSTANCE instance, LPVOID param);
-	HWND WINAPI Exedit_CreateScriptEditBox(DWORD exStyle, LPCWSTR className, LPCWSTR windowName, DWORD style, int x, int y, int w, int h, HWND parent, HMENU menu, HINSTANCE instance, LPVOID param);
+	HWND WINAPI Exedit_CreateTextEditBox(DWORD exStyle, LPCWSTR className, LPCWSTR windowName,
+		DWORD style, int32_t x, int32_t y, int32_t w, int32_t h,
+		HWND parent, HMENU menu, HINSTANCE instance, LPVOID param);
+	HWND WINAPI Exedit_CreateScriptEditBox(DWORD exStyle, LPCWSTR className, LPCWSTR windowName,
+		DWORD style, int32_t x, int32_t y, int32_t w, int32_t h,
+		HWND parent, HMENU menu, HINSTANCE instance, LPVOID param);
 
 	//---------------------------------------------------------------------
 	// Function

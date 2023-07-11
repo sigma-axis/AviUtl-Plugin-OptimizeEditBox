@@ -25,10 +25,10 @@ BOOL func_exit(AviUtl::FilterPlugin* fp)
 extern "C" __declspec(dllexport) AviUtl::FilterPluginDLL* __stdcall GetFilterTable(void)
 {
 	constexpr auto filterName = "エディットボックス最適化";
-	constexpr auto filterInformation = "エディットボックス最適化 by 蛇色, modified by sigma-axis, based on version 8.0.0 ";
+	constexpr auto filterInformation = "エディットボックス最適化 by 蛇色, modified by sigma-axis, based on version 8.0.0 rev. 3";
 
 	using Flag = AviUtl::FilterPluginDLL::Flag;
-	static AviUtl::FilterPluginDLL filter =
+	static constinit AviUtl::FilterPluginDLL filter =
 	{
 		.flag =
 			Flag::NoConfig | // このフラグを指定するとウィンドウが作成されなくなってしまう。

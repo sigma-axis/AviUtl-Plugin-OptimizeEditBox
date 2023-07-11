@@ -15,7 +15,6 @@
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{8e583504-3780-4129-bcc2-ba590dbd0d0e}</ProjectGuid>
     <RootNamespace>OptimizeEditBox</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.22000.0</WindowsTargetPlatformVersion>
     <ProjectName>OptimizeEditBox</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -107,6 +106,7 @@
   <ItemGroup>
     <ClInclude Include="delay_timer.h" />
     <ClInclude Include="editbox_predicates.h" />
+    <ClInclude Include="frame_color.hpp" />
     <ClInclude Include="OptimizeEditBox.h" />
     <ClInclude Include="OptimizeEditBox_Hook.h" />
   </ItemGroup>
@@ -114,6 +114,7 @@
     <ClCompile Include="OptimizeEditBox.cpp" />
     <ClCompile Include="OptimizeEditBox_Filter.cpp" />
     <ClCompile Include="OptimizeEditBox_Hook.cpp" />
+    <ClCompile Include="OptimizeEditBox_TL.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

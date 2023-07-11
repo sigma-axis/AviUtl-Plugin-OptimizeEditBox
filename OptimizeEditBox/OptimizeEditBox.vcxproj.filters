@@ -5,10 +5,12 @@
     <ClInclude Include="OptimizeEditBox_Hook.h" />
     <ClInclude Include="delay_timer.h" />
     <ClInclude Include="editbox_predicates.h" />
+    <ClInclude Include="frame_color.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="OptimizeEditBox.cpp" />
     <ClCompile Include="OptimizeEditBox_Filter.cpp" />
     <ClCompile Include="OptimizeEditBox_Hook.cpp" />
+    <ClCompile Include="OptimizeEditBox_TL.cpp" />
   </ItemGroup>
 </Project>
