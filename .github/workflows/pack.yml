@@ -17,11 +17,11 @@ jobs:
       matrix:
         configuration: [Release]
         platform: [x86]
-        include:
-          # - directory: 'x64/'
-          #   platform: x64
-          # - directory: ''
-          #   platform: x86
+        # include:
+        #   - directory: 'x64/'
+        #     platform: x64
+        #   - directory: ''
+        #     platform: x86
 
     steps:
     - uses: actions/checkout@v3
