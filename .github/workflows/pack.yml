@@ -46,7 +46,7 @@ jobs:
       working-directory: ${{ github.workspace }}
       run: |
         mkdir pack
-        xcopy _bin/*.auf pack
+        xcopy _bin\*.auf pack
         xcopy *.md pack
         xcopy *.ini pack
         xcopy LICENSE pack
