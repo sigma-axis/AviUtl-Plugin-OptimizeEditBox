@@ -41,16 +41,22 @@ jobs:
       # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
       run: msbuild /m /p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }} ${{ env.SOLUTION_NAME }}.sln
 
+    - name: Pack into a folder
+      shell: bash
+      working-directory: ${{ github.workspace }}
+      run: |
+        mkdir pack
+        xcopy _bin/*.auf pack
+        xcopy *.md pack
+        xcopy *.ini pack
+        xcopy LICENSE pack
+      # pick up and add any files you may need.
+
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v3
       with:
         name: ${{ env.SOLUTION_NAME }}_${{ matrix.configuration }}_${{ matrix.platform }}
-        path: |
-          _bin/*.auf
-          *.md
-          *.ini
-          LICENSE
-        # pick up and add any files you may need.
+        path: pack/*
 
   # create-archive:
   #   name: Create archive
