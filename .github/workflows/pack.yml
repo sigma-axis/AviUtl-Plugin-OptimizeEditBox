@@ -1,0 +1,75 @@
+name: make package
+on:
+  workflow_dispatch:
+
+env:
+  # Path to the solution file relative to the root of the project.
+  SOLUTION_NAME: OptimizeEditBox
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: building solution
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        configuration: [Release]
+        platform: [x86]
+        include:
+          # - directory: 'x64/'
+          #   platform: x64
+          # - directory: ''
+          #   platform: x86
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v1
+
+    # - name: Restore NuGet packages
+    #   working-directory: ${{ github.workspace }}
+    #   run: nuget restore ${{ env.SOLUTION_NAME }}.sln
+
+    - name: Build
+      working-directory: ${{ github.workspace }}
+      # Add additional options to the MSBuild command line here (like platform or verbosity level).
+      # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
+      run: msbuild /m /p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }} ${{ env.SOLUTION_NAME }}.sln
+
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ env.SOLUTION_NAME }}_${{ matrix.configuration }}_${{ matrix.platform }}
+        path: |
+          _bin/*.auf
+          *.md
+          *.ini
+          LICENSE
+        # pick up and add any files you may need.
+
+  # create-archive:
+  #   name: Create archive
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - uses: actions/checkout@v3
+    
+  #   - uses: actions/download-artifact@v3
+  #     with:
+  #       name: my_practice_files
+  #       path: artifacts
+        
+  #   - name: Create archive
+  #     run: |
+  #       cd ${{ github.workspace }}/artifacts
+  #       zip my_practice_files_in_zip -r *
+        
+  #   - uses: actions/upload-artifact@v3
+  #     with:
+  #       name: my_prac_zip_in_artifacts.zip
+  #       path: ${{ github.workspace }}/artifacts/*.zip
