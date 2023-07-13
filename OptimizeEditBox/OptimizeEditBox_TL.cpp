@@ -144,10 +144,10 @@ namespace OptimizeEditBox
 				if (c_left < c_begin)
 					fill_rect(dc, rc->top, rc->bottom, rc->left, g_begin, RGB(r1, g1, b1));
 				else {
-					int c_len = c_end - c_begin;
-					R1 += (R2 - R1) * (c_left - c_begin) / c_len; // won't overflow.
-					G1 += (G2 - G1) * (c_left - c_begin) / c_len;
-					B1 += (B2 - B1) * (c_left - c_begin) / c_len;
+					int c_dist = c_left - c_begin, c_len = c_end - c_begin;
+					R1 += (R2 - R1) * c_dist / c_len; // won't overflow.
+					G1 += (G2 - G1) * c_dist / c_len;
+					B1 += (B2 - B1) * c_dist / c_len;
 					g_begin = rc->left;
 					c_begin = c_left; // needs to update c_begin.
 				}
@@ -155,10 +155,10 @@ namespace OptimizeEditBox
 				if (c_end < c_right)
 					fill_rect(dc, rc->top, rc->bottom, g_end, rc->right, RGB(r2, g2, b2));
 				else if (c_end > c_right) { // later c_len could be zero without this condition.
-					int c_len = c_end - c_begin;
-					R2 += (R2 - R1) * (c_right - c_end) / c_len; // won't overflow.
-					G2 += (G2 - G1) * (c_right - c_end) / c_len;
-					B2 += (B2 - B1) * (c_right - c_end) / c_len;
+					int c_dist = c_right - c_end, c_len = c_end - c_begin;
+					R2 += (R2 - R1) * c_dist / c_len; // won't overflow.
+					G2 += (G2 - G1) * c_dist / c_len;
+					B2 += (B2 - B1) * c_dist / c_len;
 					g_end = rc->right;
 					// no need to update c_end.
 				}
@@ -212,11 +212,12 @@ namespace OptimizeEditBox
 					if (step.left >= step.right) continue;
 					if (step.right <= rc->left) continue;
 
-					auto I = std::min(std::max(2 * i - 1, 0), 2 * grad_steps);
-					fill_rect(dc, step, RGB(
-						r1 + r_diff * I / (2 * grad_steps),
-						g1 + g_diff * I / (2 * grad_steps),
-						b1 + b_diff * I / (2 * grad_steps)));
+					int I = 2 * i - 1;
+					fill_rect(dc, step,
+						I < 0 ? RGB(r1, g1, b1) : I > 2 * grad_steps ? RGB(r2, g2, b2) :
+						RGB(r1 + r_diff * I / (2 * grad_steps),
+							g1 + g_diff * I / (2 * grad_steps),
+							b1 + b_diff * I / (2 * grad_steps)));
 				}
 			}
 

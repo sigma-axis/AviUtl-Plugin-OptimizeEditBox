@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include <type_traits>
+#include <cstdint>
 
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
