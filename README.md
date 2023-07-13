@@ -29,21 +29,41 @@
 
 ### 新しい機能の追加．
 
-エディットボックスの TAB 文字の横幅を指定できるようにしました．
-拡張編集のテキストオブジェクトとしては実質ゼロ幅空白として無視される文字ですが `<p,>`
-制御文字やスクリプト制御で利用してテキストを見やすくすることができます．
-既定値だと大きすぎて使いづらかったので実装しました．
+1.	エディットボックスの TAB 文字の横幅を指定できるようにしました．
+
+	拡張編集のテキストオブジェクトとしては実質ゼロ幅空白として無視される文字ですが `<p,>`
+	制御文字やスクリプト制御で利用してテキストを見やすくすることができます．
+	既定値だと大きすぎて使いづらかったので実装しました．
+
+1.	タイムライン上のオブジェクトの枠を，選択中かそうでないかで別指定できるようにした．
+
+	特に高 DPI 環境だと選択中オブジェクトを囲むある点線が細く薄く表示されてしまうため見辛かったのを解消できます．
+
+	それに加えて以下のように仕様を微修正：
+	1. 枠線の色に `-1` を指定すると描画しないように変更．これで内側の枠線のマージンを設定できるように．
+	1. 枠線の太さを上下左右，4つの数値で別々に指定できるように．
+	1. それに伴って**設定ファイルの枠線指定に互換性がなくなりました．**
+
+1.	オブジェクトのグラデーション描画のオプションを増やした．
+
+	オリジナル版の「大雑把」 (ソースのコメントから抜粋) なグラデーションに加えて，デフォルトの処理に近いグラデーションと
+	patch.aul と同様の階段状の描画も指定できるように．
+
+1.	選択中オブジェクトを囲む点線を非表示にする機能を追加．
+
+*patch.aul 導入下で (2), (3) の機能を利用するためには，patch.aul の設定で `fast_exeditwindow` 内の `step` に
+`-1` を指定して patch.aul のグラデーション描画機能を無効化してください．*
 
 ### バグ修正・細かな変更
 
 1.	エディットボックスのフォント変更が，エディットボックスの高さ変更 (`addTextEditBoxHeight` や `addScriptEditBoxHeight` の指定)
-	を設定しなければ反映していなかったのを修正．
+	を設定しなければ反映されなかったのを修正．
 
 1.	Unicode 文字入力 (`usesUnicodeInput`) を有効化しているとエディットボックスにフォーカスがあるとき
 	ESC キーでダイアログが閉じてしまうのを修正．
 
 1.	同じく Unicode 文字入力を有効化しているとエディットボックスに
-	TAB キーで TAB 文字を入力できなかったのを修正．
+	TAB キーで TAB 文字が入力できなかったのを修正．
 		
 1.	設定ファイルの色指定が R, G, B が別々に分かれていたり，馴染みの薄い `0xBBGGRR` 形式の指定だったりしていたのを
 	`0xRRGGBB` 形式に統一．**これによって設定ファイルに互換性がなくなりました．**
@@ -97,21 +117,11 @@ editBoxDelay=0
 usesUnicodeInput=0 ; テキストオブジェクトで UNICODE 文字を入力したい場合は 1 を指定します。
 usesCtrlA=0 ; エディットボックスで Ctrl+A を有効にしたい場合は 1 を指定します。ただし、usesUnicodeInput が 1 のときのみ有効になります。
             ; 追記: aviutl_dark.exe 経由で起動すると (DarkenWindow.aul がなくても) Ctrl+A が自動で有効になるため不要です．
-usesGradientFill=0 ; グラデーション描画を変更する場合は 1 を指定します。ただし、patch.aul のグラデーション描画を無効にしている場合のみ有効になります。
-innerColor=0xffffff ; 内側の枠の色。
-innerEdgeWidth=1 ; 内側の枠の横幅。0以下なら枠の左右は描画しない。
-innerEdgeHeight=1 ; 内側の枠の縦幅。0以下なら枠の上下は描画しない。
-outerColor=0x000000 ; 外側の枠の色。指定の仕方は内側の枠と同じ。
-outerEdgeWidth=1
-outerEdgeHeight=1
+
 selectionColor=-1 ; 選択領域の色。色は 0xRRGGBB の形式で指定する。-1 の場合は指定なし。
 selectionEdgeColor=-1 ; 選択領域端の色。
 selectionBkColor=-1 ; 選択領域外の色。
-layerBorderLeftColor=-1 ; レイヤー間ボーダーの左側の色。
-layerBorderRightColor=-1 ; レイヤー間ボーダーの右側の色。
-layerBorderTopColor=-1 ; レイヤー間ボーダーの上側の色。
-layerBorderBottomColor=-1 ; レイヤー間ボーダーの下側の色。
-layerSeparatorColor=-1 ; レイヤーボタンとレイヤーの間の境界線の色。
+
 addTextEditBoxHeight=0 ; テキストオブジェクトのエディットボックスの高さに加算する値を指定します。例えば、200 を指定するとエディットボックスの高さが通常より 200 ピクセル高くなります。
 addScriptEditBoxHeight=0 ; スクリプト制御のエディットボックスの高さに加算する値を指定します。
 fontName=Segoe UI ; エディットボックスで使用するフォントのフォント名を指定します。
@@ -119,11 +129,65 @@ fontSize=14 ; フォントのサイズを指定します。
 fontPitch=1 ; 固定幅を指定する場合は 1 を指定します。
 tabstopTextEditBox=0 ; テキストオブジェクトのエディットボックス内の TAB 文字の横幅．0 で変更なしで既定値の 32 と同等.
 tabstopScriptEditBox=0 ; スクリプト制御のエディットボックス内の TAB 文字の横幅．
+
+usesGradientFill=0 ; グラデーション描画を変更する場合は 1 を指定します。
+                   ; ただし、patch.aul のグラデーション描画を無効 ("fast_exeditwindow.step" を -1) にしている場合のみ有効になります。
+gradientSteps=-1 ; グラデーションの種類．0 でデフォルトに近いもの，-1 でオリジナル版の簡易グラデーション，
+                 ; 1 以上で patch.aul の機能と同様の階段状のグラデーション．
+hideDotOutline=0 ; 選択中オブジェクトを囲むデフォルトの点線を非表示にするには 1 を指定します．
+
+layerBorderLeftColor=-1 ; レイヤー間ボーダーの左側の色。-1 で指定なし．
+layerBorderRightColor=-1 ; レイヤー間ボーダーの右側の色。
+layerBorderTopColor=-1 ; レイヤー間ボーダーの上側の色。
+layerBorderBottomColor=-1 ; レイヤー間ボーダーの下側の色。
+layerSeparatorColor=-1 ; レイヤーボタンとレイヤーの間の境界線の色。
+
+; タイムラインの未選択オブジェクトの枠線の設定．usesGradientFill が 1 のときのみ有効．
+[ObjectFrame]
+outerColor=0x000000 ; 外側の枠の色．-1 で描画なし (枠の太さ分だけ内側の枠のマージンが残る).
+outerLeft=1 ; 外側の枠の左の太さ． 0 から 255 まで．
+outerRight=1 ; 外側の枠の右の太さ．
+outerTop=1 ; 外側の枠の上の太さ．
+outerBottom=1 ; 外側の枠の下の太さ．
+innerColor=0xffffff ; 内側の枠の色．-1 で描画なし．
+innerLeft=1 ; 内側の枠の左の太さ．以下同様．
+innerRight=1
+innerTop=1
+innerBottom=1
+
+; タイムラインの選択中オブジェクトの枠線の設定．usesGradientFill が 1 のときのみ有効．
+; このセクションをコメントアウトまたは削除すると未選択オブジェクトの設定を引き継ぎます．
+[SelectedObjectFrame]
+outerColor=0x000000
+outerLeft=1
+outerRight=1
+outerTop=1
+outerBottom=1
+innerColor=0xffffff
+innerLeft=1
+innerRight=1
+innerTop=1
+innerBottom=1
+
 ```
 
 ## 更新履歴
 
 ###	改造版
+
+-	8.0.0_mod3
+
+	2023/07/14
+
+	- オブジェクト枠線の指定を，選択中かそうでないかで別指定できるように．
+	- デフォルトの選択中枠線の点線を非表示にできるように．
+	- オブジェクトのグラデーション描画の種類を増やした．
+	- `layerBorderTopColor`, `layerBorderBottomColor` の色指定をした場合，枠線の座標がおかしかったのを修正 (8.0.0_mod からのバグ).
+	- プラグイン情報に改造版のバージョン番号を追加．
+	- 使用ライブラリのライセンス文を同梱し忘れていたのを追加．
+	- コード整理．
+	
+	**設定ファイルの形式が変わったため [移行の手順](#移行の手順) や同梱の設定ファイルを参考に編集をお願いします．**
 
 -	8.0.0_mod2
 
@@ -183,26 +247,57 @@ tabstopScriptEditBox=0 ; スクリプト制御のエディットボックス内�
 蛇色様のオリジナル版から移行するための手順です．
 
 1.	`OptimizeEditBox.auf` を改造版に上書きコピーします．
-
 1.	`OptimizeEditBox.ini` を次の手順に従って編集します．(設定を始めからやり直したい場合は同梱のものを上書きコピーでも構いません．)
+	1.	ファイルの末尾に `[ObjectFrame]` と書いた行を追加します．
 
-	1.	`innerColorR`, `innerColorG`, `innerColorB` をまとめて `innerColor` に書き換えます．色指定は `0xRRGGBB` の形式です．
-		
+	1.	`outerColorR`, `outerColorG`, `outerColorB` をまとめて `outerColor` に書き換え,
+		`[ObjectFrame]` の次の行に配置します．色指定は `0xRRGGBB` の形式です．
+
 		例：
 
 		```ini
-		innerColorR=0x80
-		innerColorG=0xc0
-		innerColorB=0xff
+		[Settings]
+		...
+		outerColorR=0x80
+		outerColorG=0xc0
+		outerColorB=0xff
+		...
 		```
 		
 		↓
 		
 		```ini
-		innerColor=0x80c0ff
+		[ObjectFrame]
+		outerColor=0x80c0ff
+		```
+
+	1.	`outerWidth` を `outerLeft`, `outerRight` の2項目に書き換えて, `[ObjectFrame]` 以下の行に移動します．
+		`outerHeight` も同様に `outerTop`, `outerBottom` として移動します．
+
+		例：
+
+		```ini
+		[Settings]
+		...
+		outerWidth=2
+		outerHeight=1
+		...
+		```
+		
+		↓
+		
+		```ini
+		[ObjectFrame]
+		...
+		outerLeft=2
+		outerRight=2
+		outerTop=1
+		outerBottom=1
 		```
 	
-	1.	`outerColorR`, `outerColorG`, `outerColorB` も同様に `outerColor` まとめます．
+	1.	`innerColorR`, `innerColorG`, `innerColorB` も同様に `innerColor` まとめて `[ObjectFrame]` 以下に移動します．
+
+		`innerWidth`, `innerHeight` も同様に `innerLeft`, `innerRight`, `innerTop`, `innerBottom` として移動します．
 
 	1.	その他色指定の項目で， `-1` でないものがあれば，それらを `0xBBGGRR` から `0xRRGGBB` の形式に書き換えます．
 
@@ -210,11 +305,17 @@ tabstopScriptEditBox=0 ; スクリプト制御のエディットボックス内�
 		
 		`0xffc080` → `0x80c0ff`
 
-	1.	(任意) 必要なら以下の2行を末尾に追加します．
+	1.	(任意) 必要なら `[SelectedObjectFrame]` セクションも末尾に追加して，
+		`[ObjectFrame]` と同様に選択中オブジェクトの枠線設定も指定します．
+
+	1.	(任意) 必要なら以下の4行を `[Settings]` セクションの末尾に追加します．
 
 		```ini
 		tabstopTextEditBox=0 ; テキストオブジェクトのエディットボックス内の TAB 文字の横幅．0 で変更なしで既定値の 32 と同等.
 		tabstopScriptEditBox=0 ; スクリプト制御のエディットボックス内の TAB 文字の横幅．
+		gradientSteps=0 ; グラデーションの種類．0 でデフォルトに近いもの，-1 でオリジナル版の簡易グラデーション，
+						; 1 以上で patch.aul の機能と同様の階段状のグラデーション．
+		hideDotOutline=0 ; 選択中オブジェクトを囲むデフォルトの点線を非表示にするには 1 を指定します．
 		```
 
 	1.	最後に UTF8 形式で保存します．(エディットボックスのフォント指定に日本語文字が含まれる場合必須．)
@@ -232,7 +333,7 @@ AviUtl を使うたびに必ずお世話になっているプラグインです�
 
 *改造版についての不具合報告等はオリジナル版の作成者ではなく，私 sigma-axis にまでご連絡ください．*
 
--	sigma-axis
+**sigma-axis**
 -	GitHub: https://github.com/sigma-axis
 -	Twitter: https://twitter.com/sigma_axis
 -	nicovideo: https://www.nicovideo.jp/user/51492481

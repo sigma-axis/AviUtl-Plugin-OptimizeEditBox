@@ -1,29 +1,50 @@
-name: make package
+name: Draft Release
 on:
   workflow_dispatch:
+  push:
+    tags:
+    - '*'
 
 env:
   # Path to the solution file relative to the root of the project.
   SOLUTION_NAME: OptimizeEditBox
+
+  ARTIFACT_NAME: 'OptimizeEditBox_{0}'
+  ZIP_ITEM_NAME: 'OptimizeEditBox.{0}-{1}_{2}.zip'
+  ZIP_NAME: 'OptimizeEditBox.{0}.zip'
+  RELEASE_NAME: 'エディットボックス最適化 {0} 改造版r_'
 
 permissions:
   contents: read
 
 jobs:
   build:
-    name: building solution
+    name: build solution
     runs-on: windows-latest
     strategy:
       matrix:
         configuration: [Release]
         platform: [x86]
-        # include:
-        #   - directory: 'x64/'
-        #     platform: x64
-        #   - directory: ''
-        #     platform: x86
+
+    outputs:
+      job-count: ${{ steps.matrix-info.outputs.job-count }}
 
     steps:
+    - name: Matrix info
+      id: matrix-info
+      shell: bash
+      run: echo "job-count=${{ strategy.job-total }}" >> $GITHUB_OUTPUT
+
+    - name: Format names
+      id: format-names
+      shell: bash
+      # pwsh or cmd didn't work for saving variables to outputs.
+      run: |
+        echo "artifact=${{ format(env.ARTIFACT_NAME, github.ref_name) }}" >> $GITHUB_OUTPUT
+        echo "zip_item=${{ format(env.ZIP_ITEM_NAME, github.ref_name, matrix.configuration, matrix.platform) }}" >> $GITHUB_OUTPUT
+        echo "zip=${{ format(env.ZIP_NAME, github.ref_name) }}" >> $GITHUB_OUTPUT
+        echo "release=${{ format(env.RELEASE_NAME, github.ref_name) }}" >> $GITHUB_OUTPUT
+
     - uses: actions/checkout@v3
       with:
         submodules: recursive
@@ -42,39 +63,59 @@ jobs:
       run: msbuild /m /p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }} ${{ env.SOLUTION_NAME }}.sln
 
     - name: Pack into a folder
-      working-directory: ${{ github.workspace }}
       run: |
         mkdir pack
-        xcopy _bin\*.auf pack
-        xcopy *.md pack
-        xcopy *.ini pack
-        xcopy LICENSE pack
+        copy _bin/*.auf pack
+        copy *.md pack
+        copy *.ini pack
+        copy LICENSE pack
       # pick up and add any files you may need.
+
+    # - name: Compress (for matrix)
+    #   if: steps.matrix-info.outputs.job-count > 1
+    #   run: Compress-Archive -Force pack/* ${{ steps.format-names.outputs.zip_item }}
 
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v3
       with:
-        name: ${{ env.SOLUTION_NAME }}_${{ matrix.configuration }}_${{ matrix.platform }}
+        name: ${{ steps.format-names.outputs.artifact }}
         path: pack/*
+        # path: ${{ steps.matrix-info.outputs.job-count > 1 && 'pack/*.zip' || 'pack/*' }}
 
-  # create-archive:
-  #   name: Create archive
-  #   needs: build
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #   - uses: actions/checkout@v3
-    
-  #   - uses: actions/download-artifact@v3
-  #     with:
-  #       name: my_practice_files
-  #       path: artifacts
-        
-  #   - name: Create archive
-  #     run: |
-  #       cd ${{ github.workspace }}/artifacts
-  #       zip my_practice_files_in_zip -r *
-        
-  #   - uses: actions/upload-artifact@v3
-  #     with:
-  #       name: my_prac_zip_in_artifacts.zip
-  #       path: ${{ github.workspace }}/artifacts/*.zip
+  release:
+    name: draft release
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Format names
+      id: format-names
+      run: |
+        echo "artifact=${{ format(env.ARTIFACT_NAME, github.ref_name) }}" >> $GITHUB_OUTPUT
+        echo "zip_item=${{ format(env.ZIP_ITEM_NAME, github.ref_name, matrix.configuration, matrix.platform) }}" >> $GITHUB_OUTPUT
+        echo "zip=${{ format(env.ZIP_NAME, github.ref_name) }}" >> $GITHUB_OUTPUT
+        echo "release=${{ format(env.RELEASE_NAME, github.ref_name) }}" >> $GITHUB_OUTPUT
+
+    - uses: actions/download-artifact@v3
+      with:
+        name: ${{ steps.format-names.outputs.artifact }}
+        path: artifacts
+
+    - name: compress
+      if: ${{ needs.build.outputs.job-count == 1 }}
+      run: |
+        cd artifacts
+        zip -r ${{ steps.format-names.outputs.zip }} *
+
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        draft: true
+        name: ${{ steps.format-names.outputs.release }}
+        files: artifacts/*.zip
+        body: DRAFT for ${{ steps.format-names.outputs.release }}.
