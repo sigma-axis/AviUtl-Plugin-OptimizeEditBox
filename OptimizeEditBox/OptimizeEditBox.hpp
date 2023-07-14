@@ -41,17 +41,17 @@ namespace OptimizeEditBox
 			.inner{ 0xffffff, 1, 1, 1, 1 },
 		}, m_selectedFrame{};
 
-			int m_gradientSteps{ -1 };
+		int m_gradientSteps{ -1 };
 
-			COLORREF m_selectionColor{ CLR_INVALID };
-			COLORREF m_selectionEdgeColor{ CLR_INVALID };
-			COLORREF m_selectionBkColor{ CLR_INVALID };
+		COLORREF m_selectionColor{ CLR_INVALID };
+		COLORREF m_selectionEdgeColor{ CLR_INVALID };
+		COLORREF m_selectionBkColor{ CLR_INVALID };
 
-			COLORREF m_layerBorderLeftColor{ CLR_INVALID };
-			COLORREF m_layerBorderRightColor{ CLR_INVALID };
-			COLORREF m_layerBorderTopColor{ CLR_INVALID };
-			COLORREF m_layerBorderBottomColor{ CLR_INVALID };
-			COLORREF m_layerSeparatorColor{ CLR_INVALID };
+		COLORREF m_layerBorderLeftColor{ CLR_INVALID };
+		COLORREF m_layerBorderRightColor{ CLR_INVALID };
+		COLORREF m_layerBorderTopColor{ CLR_INVALID };
+		COLORREF m_layerBorderBottomColor{ CLR_INVALID };
+		COLORREF m_layerSeparatorColor{ CLR_INVALID };
 
 	private:
 		bool initHook(intptr_t exedit_auf);
