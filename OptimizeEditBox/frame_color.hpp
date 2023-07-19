@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstdint>
 #include <bit>
 
 #define NOMINMAX
@@ -16,14 +15,8 @@ namespace OptimizeEditBox::timeline
 		constexpr bool operator==(const thickness& other) const {
 			return std::bit_cast<uint32_t>(*this) == std::bit_cast<uint32_t>(other);
 		}
-		constexpr bool is_uniform_one() const {
-			constexpr uint32_t uniform_one = std::bit_cast<uint32_t>(thickness{ 1,1,1,1 });
-			return std::bit_cast<uint32_t>(*this) == uniform_one;
-		}
-		constexpr bool is_empty() const {
-			constexpr uint32_t empty = std::bit_cast<uint32_t>(thickness{ 0,0,0,0 });
-			return std::bit_cast<uint32_t>(*this) == empty;
-		}
+		constexpr bool is_uniform_one() const { return *this == thickness{ 1, 1, 1, 1 }; }
+		constexpr bool is_empty() const { return *this == thickness{ 0, 0, 0, 0 }; }
 		constexpr bool deflate_rect(RECT& rc) const {
 			rc.left += left; rc.right -= right;
 			rc.top += top; rc.bottom -= bottom;
