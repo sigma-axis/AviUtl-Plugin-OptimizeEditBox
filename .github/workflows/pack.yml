@@ -73,8 +73,8 @@ jobs:
       run: |
         mkdir pack
         copy ${{ matrix.directory }}*.auf pack
+        copy OptimizeEditBox/*.ini pack
         copy *.md pack
-        copy *.ini pack
         copy LICENSE pack
       # pick up and add any files you may need.
 

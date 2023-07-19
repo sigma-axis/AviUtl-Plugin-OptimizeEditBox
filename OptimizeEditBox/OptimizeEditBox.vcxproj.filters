@@ -1,16 +1,19 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClInclude Include="OptimizeEditBox.h" />
-    <ClInclude Include="OptimizeEditBox_Hook.h" />
-    <ClInclude Include="delay_timer.h" />
-    <ClInclude Include="editbox_predicates.h" />
     <ClInclude Include="frame_color.hpp" />
+    <ClInclude Include="delay_timer.hpp" />
+    <ClInclude Include="editbox_predicates.hpp" />
+    <ClInclude Include="OptimizeEditBox.hpp" />
+    <ClInclude Include="OptimizeEditBox_Hook.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="OptimizeEditBox.cpp" />
     <ClCompile Include="OptimizeEditBox_Filter.cpp" />
     <ClCompile Include="OptimizeEditBox_Hook.cpp" />
     <ClCompile Include="OptimizeEditBox_TL.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="OptimizeEditBox.ini" />
   </ItemGroup>
 </Project>
