@@ -11,27 +11,42 @@
 
 namespace OptimizeEditBox::timeline
 {
-	struct frame_color {
-		COLORREF color;
-		union {
-			struct { uint8_t left, top, right, bottom; };
-			uint32_t _thickness;
-		};
-
-		constexpr bool is_visible() const { return color != CLR_INVALID; }
+	struct thickness {
+		uint8_t left, top, right, bottom;
+		constexpr bool operator==(const thickness& other) const {
+			return std::bit_cast<uint32_t>(*this) == std::bit_cast<uint32_t>(other);
+		}
+		constexpr bool is_uniform_one() const {
+			constexpr uint32_t uniform_one = std::bit_cast<uint32_t>(thickness{ 1,1,1,1 });
+			return std::bit_cast<uint32_t>(*this) == uniform_one;
+		}
+		constexpr bool is_empty() const {
+			constexpr uint32_t empty = std::bit_cast<uint32_t>(thickness{ 0,0,0,0 });
+			return std::bit_cast<uint32_t>(*this) == empty;
+		}
 		constexpr bool deflate_rect(RECT& rc) const {
 			rc.left += left; rc.right -= right;
 			rc.top += top; rc.bottom -= bottom;
 			return rc.left < rc.right && rc.top < rc.bottom;
 		}
-		void normalize() { if (_thickness == 0) color = CLR_INVALID; }
-		constexpr bool is_uniform_one() const { return _thickness == uniform_one; }
+	};
+
+	struct frame_color {
+		COLORREF color;
+		thickness thick;
+
+		constexpr bool is_visible() const { return color != CLR_INVALID; }
+		template<bool inner_most = false>
+		void normalize() {
+			if (thick.is_empty()) color = CLR_INVALID;
+			else if constexpr (inner_most) {
+				if (color == CLR_INVALID) thick = { 0,0,0,0 };
+			}
+		}
 
 		constexpr bool operator==(const frame_color& other) const {
 			return std::bit_cast<uint64_t>(*this) == std::bit_cast<uint64_t>(other);
 		}
-	private:
-		static constexpr uint32_t uniform_one = 0x01010101;
 	};
 
 	struct obj_frame {

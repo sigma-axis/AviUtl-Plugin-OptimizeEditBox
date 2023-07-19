@@ -41,7 +41,8 @@ namespace OptimizeEditBox
 				// 通知メッセージ EN_CHANGE が送られてきた場合，
 				// それがユーザの現在入力対象か，そして最適化対象かをチェック．
 				if (auto sender = reinterpret_cast<HWND>(lparam);
-					::GetFocus() == sender && check_style(sender)) {
+					::GetFocus() == sender && check_style(sender) &&
+					check_classname(sender, WC_EDITW)) {
 
 					if (!theApp.is_playing()) {
 						// 通常の編集中のユーザの入力と判断，

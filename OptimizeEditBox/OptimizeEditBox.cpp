@@ -123,24 +123,24 @@ namespace OptimizeEditBox
 		auto read_val = [&](const char* key, auto def) -> decltype(def) {
 			return ::GetPrivateProfileIntA(section, key, static_cast<int32_t>(def), ini_file);
 		};
-		constexpr auto coerce_byte = [](int v) -> uint8_t { return std::min(std::max(v, 0), 255); };
+		auto coerce_byte = [](int v) -> uint8_t { return std::min(std::max(v, 0), 255); };
 #define load_gen(var, key, read, write)	var = read(read_val(key, write(var)))
 #define load_color(var, key)	load_gen(var, key, swap_byte_02, swap_byte_02)
 #define load_byte(var, key)		load_gen(var, key, coerce_byte, )
 
-		load_color(outer.color,	"outerColor");
-		load_byte(outer.left,	"outerLeft");
-		load_byte(outer.right,	"outerRight");
-		load_byte(outer.top,	"outerTop");
-		load_byte(outer.bottom,	"outerBottom");
+		load_color(outer.color,			"outerColor");
+		load_byte(outer.thick.left,		"outerLeft");
+		load_byte(outer.thick.right,	"outerRight");
+		load_byte(outer.thick.top,		"outerTop");
+		load_byte(outer.thick.bottom,	"outerBottom");
 		outer.normalize();
 
-		load_color(inner.color,	"innerColor");
-		load_byte(inner.left,	"innerLeft");
-		load_byte(inner.right,	"innerRight");
-		load_byte(inner.top,	"innerTop");
-		load_byte(inner.bottom,	"innerBottom");
-		inner.normalize();
+		load_color(inner.color,			"innerColor");
+		load_byte(inner.thick.left,		"innerLeft");
+		load_byte(inner.thick.right,	"innerRight");
+		load_byte(inner.thick.top,		"innerTop");
+		load_byte(inner.thick.bottom,	"innerBottom");
+		inner.normalize<true>();
 
 #undef load_byte
 #undef load_color

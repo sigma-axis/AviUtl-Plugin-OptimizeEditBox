@@ -13,7 +13,7 @@ namespace OptimizeEditBox
 		static const auto dc_brush = static_cast<HBRUSH>(::GetStockObject(DC_BRUSH));
 
 		::SetDCBrushColor(dc, frame.color);
-		if (frame.is_uniform_one()) ::FrameRect(dc, &rc, dc_brush); // hopefully faster.
+		if (frame.thick.is_uniform_one()) ::FrameRect(dc, &rc, dc_brush); // hopefully faster.
 		else {
 			int x = rc.left;
 			int y = rc.top;
@@ -21,15 +21,15 @@ namespace OptimizeEditBox
 			int h = rc.bottom - rc.top;
 
 			auto oldBrush = ::SelectObject(dc, dc_brush);
-			if (frame.top > 0)
-				::PatBlt(dc, x, y, w, std::min<int>(frame.top, h), PATCOPY);
-			if (frame.bottom > 0)
-				::PatBlt(dc, x, y + h, w, -std::min<int>(frame.bottom, h), PATCOPY);
-			y += frame.top; h -= frame.top + frame.bottom;
-			if (frame.left > 0)
-				::PatBlt(dc, x, y, std::min<int>(frame.left, w), h, PATCOPY);
-			if (frame.right > 0)
-				::PatBlt(dc, x + w, y, -std::min<int>(frame.right, w), h, PATCOPY);
+			if (frame.thick.top > 0)
+				::PatBlt(dc, x, y, w, std::min<int>(frame.thick.top, h), PATCOPY);
+			if (frame.thick.bottom > 0)
+				::PatBlt(dc, x, y + h, w, -std::min<int>(frame.thick.bottom, h), PATCOPY);
+			y += frame.thick.top; h -= frame.thick.top + frame.thick.bottom;
+			if (frame.thick.left > 0)
+				::PatBlt(dc, x, y, std::min<int>(frame.thick.left, w), h, PATCOPY);
+			if (frame.thick.right > 0)
+				::PatBlt(dc, x + w, y, -std::min<int>(frame.thick.right, w), h, PATCOPY);
 			::SelectObject(dc, oldBrush);
 
 			// ::FillRect() と ::PatBlt() どっちがいいのかわからないけど引数指定しやすかったので．
@@ -52,13 +52,12 @@ namespace OptimizeEditBox
 	static void grad_fill(HDC hdc, int top, int bottom, int left, int right,
 		uint16_t r1, uint16_t g1, uint16_t b1, uint16_t r2, uint16_t g2, uint16_t b2)
 	{
-		static constinit GRADIENT_RECT gRect = { .UpperLeft = 0, .LowerRight = 1 };
+		static constinit GRADIENT_RECT rects[] = { {.UpperLeft = 0, .LowerRight = 1 } };
 		TRIVERTEX verts[] = {
 			{.x = left,  .y = top,    .Red = r1, .Green = g1, .Blue = b1, .Alpha = 0 },
 			{.x = right, .y = bottom, .Red = r2, .Green = g2, .Blue = b2, .Alpha = 0 },
 		};
-		// note: ::GradientFill() -> ::GdiGradientFill() に差し替え．.lib を減らせる．
-		::GdiGradientFill(hdc, verts, 2, &gRect, 1, GRADIENT_FILL_RECT_H);
+		::GdiGradientFill(hdc, verts, std::size(verts), rects, std::size(rects), GRADIENT_FILL_RECT_H);
 	}
 
 	// グラデーション幅が 0 以下の例外的な場面で呼ぶ関数．2色に塗り分けるだけ．本当に必要かは不明．
@@ -82,7 +81,7 @@ namespace OptimizeEditBox
 			frame_rect(dc, frm, frame_data->outer);
 
 		if (frame_data->inner.is_visible() &&
-			frame_data->outer.deflate_rect(frm))
+			frame_data->outer.thick.deflate_rect(frm))
 			frame_rect(dc, frm, frame_data->inner);
 	}
 
@@ -102,6 +101,10 @@ namespace OptimizeEditBox
 
 	namespace hooks_Exedit_FillGradation
 	{
+		// 単色塗りつぶし目的でもこれらの関数が呼ばれる (中間点の間や Ctrl 選択時など).
+		// その場合 r1 = r2, g1 = g2, b1 = b2, g_begin = 0, g_end = 0 という状況になっている．
+		// また，rc->left は最小でも 64.
+
 		// グラデーションの描画 パターン 1. 単純なグラデーション．
 		void __cdecl simple(HDC dc, const RECT* rc,
 			int32_t r1, int32_t g1, int32_t b1, int32_t r2, int32_t g2, int32_t b2, int32_t, int32_t)
@@ -124,48 +127,49 @@ namespace OptimizeEditBox
 			// https://github.com/ePi5131/patch.aul/blob/d46adbf95c87e52fe021222aea02837fdd03a6ef/patch/patch_fast_exeditwindow.cpp#L28
 			// オーバーフロー対策は 64 bit に伸長するのではなく，予め下位ビットを切り落としておく方針に．
 
-			if (rc->right <= g_begin) [[unlikely]] fill_rect(dc, *rc, RGB(r1, g1, b1));
-			else if (g_end <= rc->left) [[unlikely]] fill_rect(dc, *rc, RGB(r2, g2, b2));
+			if (g_end <= rc->left) fill_rect(dc, *rc, RGB(r2, g2, b2));
+			else if (rc->right <= g_begin) [[unlikely]] fill_rect(dc, *rc, RGB(r1, g1, b1));
 			else if (g_begin >= g_end) [[unlikely]]
 				split_fill(dc, *rc, g_begin, RGB(r1, g1, b1), RGB(r2, g2, b2));
-			else [[likely]] {
+			else {
 				// denominate some bits to prevent overflows in later calculations.
-				int c_left = rc->left, c_right = rc->right,
-					c_begin = g_begin, c_end = g_end;
-				if (auto l = std::bit_width(static_cast<uint32_t>(c_end - c_begin)); l > 15) [[unlikely]] {
-					l -= 15;
-					c_left >>= l; c_right >>= l;
-					c_begin >>= l; c_end >>= l;
-				}
-				// hereafter, c_end - c_begin <= 2^15. (possibly equals.)
+				int c_len = g_end - g_begin,
+					c_left = rc->left - g_begin, c_right = rc->right - g_begin;
+				if (c_len >= (1 << 15)) [[unlikely]] {
+					auto l = std::bit_width(static_cast<uint32_t>(c_len)) - 15;
+					c_len = c_len >> l;
+					c_left = c_left >> l; c_right = c_right >> l;
 
-				int R1 = r1 << 8, G1 = g1 << 8, B1 = b1 << 8,
-					R2 = r2 << 8, G2 = g2 << 8, B2 = b2 << 8;
-				if (c_left < c_begin)
-					fill_rect(dc, rc->top, rc->bottom, rc->left, g_begin, RGB(r1, g1, b1));
+					// note: since one frame renders at most 10-pixel-wide,
+					// c_len could only overflow (>= 2^31)
+					// if the object is ~994 hours long or over at 60 FPS.
+					// this code assumes those vastly long objects won't exist.
+				}
+				// hereafter, c_len < 2^15.
+
+				r1 <<= 8; g1 <<= 8; b1 <<= 8;
+				r2 <<= 8; g2 <<= 8; b2 <<= 8;
+				const int dR = r2 - r1, dG = g2 - g1, dB = b2 - b1;
+				if (g_end < rc->right)
+					fill_rect(dc, rc->top, rc->bottom, g_end, rc->right, (r2 >> 8) | g2 | (b2 << 8));
 				else {
-					int c_dist = c_left - c_begin, c_len = c_end - c_begin;
-					R1 += (R2 - R1) * c_dist / c_len; // won't overflow.
-					G1 += (G2 - G1) * c_dist / c_len;
-					B1 += (B2 - B1) * c_dist / c_len;
-					g_begin = rc->left;
-					c_begin = c_left; // needs to update c_begin.
-				}
-
-				if (c_end < c_right)
-					fill_rect(dc, rc->top, rc->bottom, g_end, rc->right, RGB(r2, g2, b2));
-				else if (c_end > c_right) { // later c_len could be zero without this condition.
-					int c_dist = c_right - c_end, c_len = c_end - c_begin;
-					R2 += (R2 - R1) * c_dist / c_len; // won't overflow.
-					G2 += (G2 - G1) * c_dist / c_len;
-					B2 += (B2 - B1) * c_dist / c_len;
+					r2 = r1 + dR * c_right / c_len; // won't overflow.
+					g2 = g1 + dG * c_right / c_len;
+					b2 = b1 + dB * c_right / c_len;
 					g_end = rc->right;
-					// no need to update c_end.
 				}
 
-				if (g_begin < g_end)
-					grad_fill(dc, rc->top, rc->bottom,
-						g_begin, g_end, R1, G1, B1, R2, G2, B2);
+				if (rc->left < g_begin)
+					fill_rect(dc, rc->top, rc->bottom, rc->left, g_begin, (r1 >> 8) | g1 | (b1 << 8));
+				else {
+					r1 = r1 + dR * c_left / c_len; // won't overflow.
+					g1 = g1 + dG * c_left / c_len;
+					b1 = b1 + dB * c_left / c_len;
+					g_begin = rc->left;
+				}
+
+				grad_fill(dc, rc->top, rc->bottom,
+					g_begin, g_end, r1, g1, b1, r2, g2, b2);
 			}
 
 			// 枠を描画．
@@ -193,20 +197,20 @@ namespace OptimizeEditBox
 			// case of steps >= 2.
 			const int grad_steps = theApp.m_gradientSteps;
 
-			if (rc->right <= g_begin) [[unlikely]] fill_rect(dc, *rc, RGB(r1, g1, b1));
-			else if (g_end <= rc->left) [[unlikely]] fill_rect(dc, *rc, RGB(r2, g2, b2));
+			if (g_end <= rc->left) fill_rect(dc, *rc, RGB(r2, g2, b2));
+			else if (rc->right <= g_begin) [[unlikely]] fill_rect(dc, *rc, RGB(r1, g1, b1));
 			else if (g_end <= g_begin) [[unlikely]]
 				split_fill(dc, *rc, g_begin, RGB(r1, g1, b1), RGB(r2, g2, b2));
-			else [[likely]] {
+			else {
 				RECT step{ .top = rc->top, .right = rc->left, .bottom = rc->bottom };
-				auto g_len = static_cast<int64_t>(g_end) - g_begin; // extend to 64 bits to avoid overflowing.
-				auto r_diff = r2 - r1, g_diff = g2 - g1, b_diff = b2 - b1;
+				const auto [i_len, i_rem] = std::div(g_end - g_begin, grad_steps); // to avoid overflowing.
+				const auto dr = r2 - r1, dg = g2 - g1, db = b2 - b1;
 				for (int i = 0; step.right < rc->right; i++) {
 					step.left = std::max(step.right, rc->left);
 
 					if (i <= grad_steps)
 						step.right = std::min<int32_t>(rc->right,
-							g_begin + static_cast<int32_t>(g_len * i / grad_steps));
+							g_begin + i_len * i + (i_rem * i) / grad_steps);
 					else step.right = rc->right;
 
 					if (step.left >= step.right) continue;
@@ -215,9 +219,9 @@ namespace OptimizeEditBox
 					int I = 2 * i - 1;
 					fill_rect(dc, step,
 						I < 0 ? RGB(r1, g1, b1) : I > 2 * grad_steps ? RGB(r2, g2, b2) :
-						RGB(r1 + r_diff * I / (2 * grad_steps),
-							g1 + g_diff * I / (2 * grad_steps),
-							b1 + b_diff * I / (2 * grad_steps)));
+						RGB(r1 + dr * I / (2 * grad_steps),
+							g1 + dg * I / (2 * grad_steps),
+							b1 + db * I / (2 * grad_steps)));
 				}
 			}
 

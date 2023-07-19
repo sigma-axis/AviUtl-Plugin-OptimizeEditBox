@@ -29,16 +29,17 @@ jobs:
         - directory: _bin/
 
     outputs:
-      job-count: ${{ steps.matrix-info.outputs.job-count }}
-      artifact: ${{ steps.format-names.outputs.artifact }}"
-      zip: ${{ steps.format-names.outputs.zip }}"
-      release: ${{ steps.format-names.outputs.release }}"
+      asset-count: ${{ steps.matrix-info.outputs.asset-count }}
+      artifact: ${{ steps.format-names.outputs.artifact }}
+      zip: ${{ steps.format-names.outputs.zip }}
+      release: ${{ steps.format-names.outputs.release }}
 
     steps:
     - name: Matrix info
       id: matrix-info
+      # if: strategy.job-index == 0
       shell: bash
-      run: echo "job-count=${{ strategy.job-total }}" >> $GITHUB_OUTPUT
+      run: echo "asset-count=${{ strategy.job-total }}" >> $GITHUB_OUTPUT
 
     - name: Format names
       id: format-names
@@ -77,16 +78,15 @@ jobs:
         copy LICENSE pack
       # pick up and add any files you may need.
 
-    # - name: Compress (for matrix)
-    #   if: steps.matrix-info.outputs.job-count > 1
-    #   run: Compress-Archive -Force pack/* ${{ steps.format-names.outputs.zip_item }}
+    - name: Compress (for matrix)
+      if: strategy.job-total > 1
+      run: Compress-Archive -Force pack/* pack/${{ steps.format-names.outputs.zip_item }}
 
-    - name: Upload a Build Artifact
+    - name: Upload the build as artifacts
       uses: actions/upload-artifact@v3
       with:
         name: ${{ steps.format-names.outputs.artifact }}
-        path: pack/*
-        # path: ${{ steps.matrix-info.outputs.job-count > 1 && 'pack/*.zip' || 'pack/*' }}
+        path: ${{ strategy.job-total > 1 && 'pack/*.zip' || 'pack/*' }}
 
   release:
     name: draft release
@@ -103,7 +103,7 @@ jobs:
         path: artifacts
 
     - name: compress
-      if: ${{ needs.build.outputs.job-count == 1 }}
+      if: ${{ needs.build.outputs.asset-count == 1 }}
       run: |
         cd artifacts
         zip -r ${{ needs.build.outputs.zip }} *
