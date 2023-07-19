@@ -9,10 +9,10 @@ env:
   SOLUTION_NAME: OptimizeEditBox
   # Path to the solution file relative to the root of the project.
 
-  ARTIFACT_NAME: 'OptimizeEditBox_{0}'
-  ZIP_ITEM_NAME: 'OptimizeEditBox.{0}-{1}_{2}.zip'
-  ZIP_NAME: 'OptimizeEditBox.{0}.zip'
-  RELEASE_NAME: 'エディットボックス最適化 {0} 改造版 r_'
+  ARTIFACT_NAME: OptimizeEditBox_{0}
+  ZIP_ITEM_NAME: OptimizeEditBox.{0}-{1}_{2}.zip
+  ZIP_NAME: OptimizeEditBox.{0}.zip
+  RELEASE_NAME: エディットボックス最適化 {0} 改造版 r_
 
 permissions:
   contents: read
