@@ -3,6 +3,8 @@ on:
   workflow_dispatch:
   push:
     tags:
+    - '*mod[_-]?[a-z]?[0-9.]+'
+    branches:
     - '*'
 
 env:
@@ -19,7 +21,7 @@ permissions:
 
 jobs:
   build:
-    name: build solution
+    name: Build Solution
     runs-on: windows-latest
     strategy:
       matrix:
@@ -37,7 +39,6 @@ jobs:
     steps:
     - name: Matrix info
       id: matrix-info
-      # if: strategy.job-index == 0
       shell: bash
       run: echo "asset-count=${{ strategy.job-total }}" >> $GITHUB_OUTPUT
 
@@ -89,8 +90,8 @@ jobs:
         path: ${{ strategy.job-total > 1 && 'pack/*.zip' || 'pack/*' }}
 
   release:
-    name: draft release
-    if: github.event_name == 'push'
+    name: Draft Release
+    if: github.event_name == 'push' && github.ref_type == 'tag'
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -102,8 +103,8 @@ jobs:
         name: ${{ needs.build.outputs.artifact }}
         path: artifacts
 
-    - name: compress
-      if: ${{ needs.build.outputs.asset-count == 1 }}
+    - name: Compress
+      if: needs.build.outputs.asset-count == 1
       run: |
         cd artifacts
         zip -r ${{ needs.build.outputs.zip }} *

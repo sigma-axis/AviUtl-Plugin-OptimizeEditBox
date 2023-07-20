@@ -25,7 +25,7 @@ BOOL func_exit(AviUtl::FilterPlugin* fp)
 extern "C" __declspec(dllexport) AviUtl::FilterPluginDLL* __stdcall GetFilterTable(void)
 {
 	constexpr auto filterName = "エディットボックス最適化";
-	constexpr auto filterInformation = "エディットボックス最適化 by 蛇色, modified by sigma-axis, based on version 8.0.0 rev. 3";
+	constexpr auto filterInformation = "エディットボックス最適化 by 蛇色, modified by sigma-axis, based on version 8.0.0 rev. 3.1pre";
 
 	using Flag = AviUtl::FilterPluginDLL::Flag;
 	static constinit AviUtl::FilterPluginDLL filter =
