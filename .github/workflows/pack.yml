@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     tags:
-    - '*mod[_-]?[a-z]?[0-9.]+'
+    - '*-mod*[0-9]'
     branches:
     - '*'
 
