@@ -9,6 +9,8 @@
 #include "../Detours.4.0.1/detours.h"
 #pragma comment(lib, "../Detours.4.0.1/detours.lib")
 
+#include "delay_timer.hpp"
+
 //---------------------------------------------------------------------
 // Define and Const
 
@@ -61,6 +63,10 @@ namespace OptimizeEditBox
 
 	DECLARE_HOOK_PROC(void, __cdecl, DrawObject, (HDC dc, int32_t ObjectIndex));
 	DECLARE_HOOK_PROC(LRESULT, WINAPI, Exedit_SettingDialog_WndProc, (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam));
+	inline constinit delay_timer::delay_timer<[](HWND hwnd, WPARAM wparam, LPARAM lparam) {
+		true_Exedit_SettingDialog_WndProc(hwnd, WM_COMMAND, wparam, lparam);
+	}, HWND, WPARAM, LPARAM>
+		timer_Exedit_SettingDialog_WndProc{};
 
 	void Exedit_DrawLineLeft(HDC dc, int32_t mx, int32_t my, int32_t lx, int32_t ly, HPEN pen);
 	void Exedit_DrawLineRight(HDC dc, int32_t mx, int32_t my, int32_t lx, int32_t ly, HPEN pen);

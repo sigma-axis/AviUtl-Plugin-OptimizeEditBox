@@ -48,14 +48,14 @@ namespace OptimizeEditBox
 						// 通常の編集中のユーザの入力と判断，
 						// スレッドタイマーを上書きセットする。
 						// タイマー停止時に実行するコマンド用の変数をメンバ変数に格納しておく。
-						delay_timer::Exedit_SettingDialog_WndProc
+						timer_Exedit_SettingDialog_WndProc
 							.set(theApp.m_editBoxDelay, hwnd, wparam, lparam);
 						return 0;
 					}
 					else {
 						// プレビュー再生中のユーザの入力と判断，
 						// 遅延させずに即座に効果を持たせる（再生が停止する）．遅延待機中の更新通知があるなら破棄．
-						delay_timer::Exedit_SettingDialog_WndProc.discard();
+						timer_Exedit_SettingDialog_WndProc.discard();
 					}
 				}
 				break;
@@ -65,7 +65,7 @@ namespace OptimizeEditBox
 
 				// 別のエディットボックスであったとしてもその場合 .tick() は何もしないため無害．
 				// check_style() で確認するのは Win32 API を呼ぶことになって余計手間かも．
-				delay_timer::Exedit_SettingDialog_WndProc();
+				timer_Exedit_SettingDialog_WndProc();
 				break;
 			}
 		}

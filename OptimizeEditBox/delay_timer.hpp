@@ -1,31 +1,29 @@
 ﻿#pragma once
 
-#include <cstdint>
+#include <tuple>
 
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
-
-#include "OptimizeEditBox_Hook.hpp"
 
 //---------------------------------------------------------------------
 
 namespace OptimizeEditBox::delay_timer
 {
 	// 逐次延期しながら遅延するタイマーの実装．
-	inline struct delay_timer {
+	template<auto onTick, class... TArgs>
+		requires std::is_invocable_v<decltype(onTick), TArgs...>
+	struct delay_timer {
 		using Id = UINT_PTR;
+		using Cxt = std::tuple<Id, TArgs...>;
 
-		Id id = 0;
-		HWND hwnd = nullptr;
-		static constexpr UINT message = WM_COMMAND;
-		WPARAM wparam = 0;
-		LPARAM lparam = 0;
+		Cxt cxt{ 0, TArgs{}... };
+		Id& id() { return std::get<0>(cxt); }
 		bool is_working() { return !is_idle(); }
-		bool is_idle() { return id == 0; }
+		bool is_idle() { return id() == 0; }
 
-		void set(uint32_t time, HWND hwnd, WPARAM wparam, LPARAM lparam) {
-			if (self == this) [[likely]] set_internal(time, hwnd, wparam, lparam);
+		void set(uint32_t time, TArgs... args) {
+			if (self == this) [[likely]] set_internal(time, args...);
 		}
 		void discard() { if (is_working()) discard_internal(); }
 		void operator()() { tick(); }
@@ -49,30 +47,31 @@ namespace OptimizeEditBox::delay_timer
 		}
 
 	private:
-		void set_internal(uint32_t time, HWND hw, WPARAM wp, LPARAM lp)
+		void set_internal(uint32_t time, TArgs... args)
 		{
 			// note: specifying the same id with the existing timer prolongs the delay,
 			// even if it's not associated to a window handle.
-			hwnd = hw; wparam = wp; lparam = lp;
-			id = ::SetTimer(nullptr, id, time, TimerProc);
+			cxt = std::make_tuple(::SetTimer(nullptr, id(), time, TimerProc), args...);
 		}
 		void discard_internal()
 		{
-			::KillTimer(nullptr, id);
-			id = 0;
+			::KillTimer(nullptr, id());
+			id() = 0;
 		}
 		void tick_internal()
 		{
 			discard_internal();
-			true_Exedit_SettingDialog_WndProc(hwnd, message, wparam, lparam);
+			[&]<size_t... I>(std::index_sequence<I...>) {
+				onTick(std::get<1 + I>(cxt)...);
+			}(std::index_sequence_for<TArgs...>{});
 		}
 
 		// ideally, there desired a mapping {id's} -> {timers}.
 		inline static delay_timer* self = nullptr; // also working as a "main switch".
 		static void CALLBACK TimerProc(auto, auto, Id id, auto) {
-			if (self != nullptr && id == self->id)
+			if (self != nullptr && id == self->id())
 				[[likely]] self->tick_internal();
 			else ::KillTimer(nullptr, id);
 		}
-	} Exedit_SettingDialog_WndProc;
+	};
 }

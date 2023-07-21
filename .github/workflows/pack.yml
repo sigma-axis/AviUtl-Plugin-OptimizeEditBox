@@ -115,6 +115,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         draft: true
+        prerelease: ${{ contains(github.ref_name, 'pre') }}
         name: ${{ needs.build.outputs.release }}
         files: artifacts/*.zip
         body: DRAFT for ${{ needs.build.outputs.release }}.
