@@ -21,7 +21,7 @@ namespace OptimizeEditBox
 			m_is_playing = reinterpret_cast<decltype(m_is_playing)>(exedit_auf + 0x1a52ec);
 
 			// turn on the timer.
-			timer_Exedit_SettingDialog_WndProc.activate();
+			timer_Exedit_SettingDialog_WndProc::activate();
 		}
 
 		if (m_addTextEditBoxHeight != 0 || m_tabstopTextEditBox > 0 || m_font != nullptr) {
@@ -282,7 +282,7 @@ namespace OptimizeEditBox
 	bool COptimizeEditBoxApp::func_exit(AviUtl::FilterPlugin* fp)
 	{
 		if (m_editBoxDelay > 0)
-			timer_Exedit_SettingDialog_WndProc.deactivate();
+			timer_Exedit_SettingDialog_WndProc::deactivate();
 
 		if (m_font != nullptr) {
 			::DeleteObject(m_font);
