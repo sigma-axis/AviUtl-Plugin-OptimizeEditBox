@@ -89,7 +89,6 @@
       <AdditionalIncludeDirectories>../aviutl_exedit_sdk/</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
       <AdditionalOptions>/source-charset:utf-8 /execution-charset:shift_jis %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
