@@ -78,9 +78,9 @@ namespace OptimizeEditBox
 		if (m_usesGradientFill) {
 			using namespace hooks_Exedit_FillGradation;
 			hook_Exedit_FillGradation =
-				m_gradientSteps < 0 ? simple :
-				m_gradientSteps == 0 ? original :
-				m_gradientSteps == 1 ? solid : steps;
+				m_gradientSteps < -1 ? solid :
+				m_gradientSteps == -1 ? simple :
+				m_gradientSteps == 0 ? original : steps;
 
 			ATTACH_HOOK_PROC(Exedit_FillGradation);
 			if (m_objectFrame != m_selectedFrame)

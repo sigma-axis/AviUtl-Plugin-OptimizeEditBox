@@ -60,14 +60,6 @@ namespace OptimizeEditBox
 		::GdiGradientFill(hdc, verts, std::size(verts), rects, std::size(rects), GRADIENT_FILL_RECT_H);
 	}
 
-	// グラデーション幅が 0 以下の例外的な場面で呼ぶ関数．2色に塗り分けるだけ．本当に必要かは不明．
-	static void split_fill(HDC dc, const RECT& rc, int middle, COLORREF color1, COLORREF color2)
-	{
-		// for the case of `g_begin >= g_end`.
-		fill_rect(dc, rc.top, rc.bottom, rc.left, middle, color1);
-		fill_rect(dc, rc.top, rc.bottom, middle, rc.right, color2);
-	}
-
 	// 現在選択オブジェクトを描画するとき，色設定の切り替えに使う変数．
 	static constinit auto const* frame_data = &theApp.m_objectFrame;
 
@@ -101,9 +93,24 @@ namespace OptimizeEditBox
 
 	namespace hooks_Exedit_FillGradation
 	{
+		// 呼び出された場合，rc->left < rc->right が成り立っていて，仮に幅が 0 になるくらいの
+		// 小さい拡大率と短いオブジェクトであっても最低幅 1 ピクセルが保証されている模様．
+
 		// 単色塗りつぶし目的でもこれらの関数が呼ばれる (中間点の間や Ctrl 選択時など).
 		// その場合 r1 = r2, g1 = g2, b1 = b2, g_begin = 0, g_end = 0 という状況になっている．
 		// また，rc->left は最小でも 64.
+
+		// グラデーション幅は，端をつまんでドラッグ中のオブジェクトは 20 ピクセル，
+		// 上述の単色塗りつぶしの場合は 0, それ以外はオブジェクト幅となっている模様．
+		// 単色塗りつぶしさえ処理しておけば 0 除算の心配はない．
+
+		// グラデーションの描画 パターン 0. 単色で塗りつぶす．theApp.m_gradientSteps == -2 の場合とする．
+		void __cdecl solid(HDC dc, const RECT* rc,
+			int32_t r1, int32_t g1, int32_t b1, int32_t r2, int32_t g2, int32_t b2, int32_t, int32_t)
+		{
+			fill_rect(dc, *rc, RGB((r1 + r2) >> 1, (g1 + g2) >> 1, (b1 + b2) >> 1));
+			draw_object_frame(dc, *rc);
+		}
 
 		// グラデーションの描画 パターン 1. 単純なグラデーション．
 		void __cdecl simple(HDC dc, const RECT* rc,
@@ -129,43 +136,51 @@ namespace OptimizeEditBox
 
 			if (g_end <= rc->left) fill_rect(dc, *rc, RGB(r2, g2, b2));
 			else if (rc->right <= g_begin) [[unlikely]] fill_rect(dc, *rc, RGB(r1, g1, b1));
-			else if (g_begin >= g_end) [[unlikely]]
-				split_fill(dc, *rc, g_begin, RGB(r1, g1, b1), RGB(r2, g2, b2));
 			else {
-				// denominate some bits to prevent overflows in later calculations.
-				int c_len = g_end - g_begin,
-					c_left = rc->left - g_begin, c_right = rc->right - g_begin;
-				if (c_len >= (1 << 15)) [[unlikely]] {
-					auto l = std::bit_width(static_cast<uint32_t>(c_len)) - 15;
-					c_len = c_len >> l;
-					c_left = c_left >> l; c_right = c_right >> l;
-
-					// note: since one frame renders at most 10-pixel-wide,
-					// c_len could only overflow (>= 2^31)
-					// if the object is ~994 hours long or over at 60 FPS.
-					// this code assumes those vastly long objects won't exist.
-				}
-				// hereafter, c_len < 2^15.
-
 				r1 <<= 8; g1 <<= 8; b1 <<= 8;
 				r2 <<= 8; g2 <<= 8; b2 <<= 8;
-				const int dR = r2 - r1, dG = g2 - g1, dB = b2 - b1;
-				if (g_end < rc->right)
-					fill_rect(dc, rc->top, rc->bottom, g_end, rc->right, (r2 >> 8) | g2 | (b2 << 8));
-				else {
-					r2 = r1 + dR * c_right / c_len; // won't overflow.
-					g2 = g1 + dG * c_right / c_len;
-					b2 = b1 + dB * c_right / c_len;
-					g_end = rc->right;
-				}
 
-				if (rc->left < g_begin)
-					fill_rect(dc, rc->top, rc->bottom, rc->left, g_begin, (r1 >> 8) | g1 | (b1 << 8));
-				else {
-					r1 = r1 + dR * c_left / c_len; // won't overflow.
-					g1 = g1 + dG * c_left / c_len;
-					b1 = b1 + dB * c_left / c_len;
-					g_begin = rc->left;
+				// こまごましたオブジェクトは殆どが単純グラデーション．
+				if (g_begin != rc->left || g_end != rc->right) [[unlikely]] {
+					// denominate some bits to prevent overflows in later calculations.
+					int c_len = g_end - g_begin,
+						c_left = rc->left - g_begin, c_right = rc->right - g_begin;
+					if (c_len >= (1 << 15)) [[unlikely]] {
+						auto l = std::bit_width(static_cast<uint32_t>(c_len)) - 15;
+						c_len = c_len >> l;
+						c_left = c_left >> l; c_right = c_right >> l;
+
+						// note: since one frame renders at most 10-pixel-wide,
+						// c_len could only overflow (>= 2^31)
+						// if the object is ~994 hours long or over at 60 FPS.
+						// this code assumes those vastly long objects won't exist.
+					}
+					// hereafter, c_len < 2^15.
+
+					// 仮に g_end <= g_begin の場合であっても，c_len で割る操作は発生しない;
+					// このブロック以前の if / else if 句で処理されるか，
+					// 以下の分岐は2つとも fill_rect() 呼び出し側を通る．
+					// そのため g_begin < g_end の仮説がなくても 0 除算の心配はない．
+
+					const int dR = r2 - r1, dG = g2 - g1, dB = b2 - b1;
+					if (rc->left < g_begin)
+						fill_rect(dc, rc->top, rc->bottom, rc->left, g_begin, (r1 >> 8) | g1 | (b1 << 8));
+					else {
+						r1 += dR * c_left / c_len; // won't overflow.
+						g1 += dG * c_left / c_len;
+						b1 += dB * c_left / c_len;
+						g_begin = rc->left;
+					}
+
+					if (g_end < rc->right)
+						fill_rect(dc, rc->top, rc->bottom, g_end, rc->right, (r2 >> 8) | g2 | (b2 << 8));
+					else {
+						c_right -= c_len;
+						r2 += dR * c_right / c_len; // won't overflow.
+						g2 += dG * c_right / c_len;
+						b2 += dB * c_right / c_len;
+						g_end = rc->right;
+					}
 				}
 
 				grad_fill(dc, rc->top, rc->bottom,
@@ -176,31 +191,17 @@ namespace OptimizeEditBox
 			draw_object_frame(dc, *rc);
 		}
 
-		// グラデーションの描画 パターン 3. 単色で塗りつぶす．
-		void __cdecl solid(HDC dc, const RECT* rc,
-			int32_t r1, int32_t g1, int32_t b1, int32_t r2, int32_t g2, int32_t b2, int32_t, int32_t)
-		{
-			// case of steps == 1.
-			fill_rect(dc, *rc, RGB((r1 + r2) >> 1, (g1 + g2) >> 1, (b1 + b2) >> 1));
-
-			// 枠を描画．
-			draw_object_frame(dc, *rc);
-		}
-
-		// グラデーションの描画 パターン 4. 階段状のグラデーション．
+		// グラデーションの描画 パターン 3. 階段状のグラデーション．
 		void __cdecl steps(HDC dc, const RECT* rc,
 			int32_t r1, int32_t g1, int32_t b1, int32_t r2, int32_t g2, int32_t b2, int32_t g_begin, int32_t g_end)
 		{
 			// 参考にしました:
 			// https://github.com/ePi5131/patch.aul/blob/d46adbf95c87e52fe021222aea02837fdd03a6ef/patch/patch_fast_exeditwindow.cpp#L138
 
-			// case of steps >= 2.
-			const int grad_steps = theApp.m_gradientSteps;
+			const int grad_steps = theApp.m_gradientSteps; // >= 1.
 
 			if (g_end <= rc->left) fill_rect(dc, *rc, RGB(r2, g2, b2));
 			else if (rc->right <= g_begin) [[unlikely]] fill_rect(dc, *rc, RGB(r1, g1, b1));
-			else if (g_end <= g_begin) [[unlikely]]
-				split_fill(dc, *rc, g_begin, RGB(r1, g1, b1), RGB(r2, g2, b2));
 			else {
 				RECT step{ .top = rc->top, .right = rc->left, .bottom = rc->bottom };
 				const auto [i_len, i_rem] = std::div(g_end - g_begin, grad_steps); // to avoid overflowing.
