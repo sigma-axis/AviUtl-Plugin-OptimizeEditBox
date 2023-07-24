@@ -1,4 +1,4 @@
-﻿# AviUtl プラグイン - エディットボックス最適化 (sigma-axis 改造版)
+# AviUtl プラグイン - エディットボックス最適化 (sigma-axis 改造版)
 
 蛇色様の [エディットボックス最適化プラグイン](https://github.com/hebiiro/AviUtl-Plugin-OptimizeEditBox) のバージョン 8.0.0 を元に機能追加，バグ修正，自分好みのアレンジを加えたものです．
 
@@ -55,29 +55,33 @@
 
 	-	`-2` を指定: 単色表示．
 
-		TODO: add an image.
+		![各区間を単色で描画](https://github.com/sigma-axis/AviUtl-Plugin-OptimizeEditBox/assets/132639613/a00ab7f6-a114-403b-a377-1eaac7bad1f9)
+
 
 	-	`-1` を指定: オリジナル版の簡易グラデーション．
 
-		TODO: add an image.
+		![オリジナル版のグラデーション](https://github.com/sigma-axis/AviUtl-Plugin-OptimizeEditBox/assets/132639613/21ae9041-7eaa-461e-93d9-35db11eda3b7)﻿
 		-	デフォルトに比べてオブジェクト端をドラッグ中の見え方が違います．
 
 	-	`0` を指定: AviUtl デフォルトのグラデーション．
 
-		TODO: add an image.
+		![デフォルトのグラデーション](https://github.com/sigma-axis/AviUtl-Plugin-OptimizeEditBox/assets/132639613/0ec24349-e18a-4dd6-9db6-ae8af4d45109)
 
 	-	`1` 以上を指定: patch.aul と同様の階段状グラデーション．
 
-		TODO: add an image.
+		![階段状のグラデーション](https://github.com/sigma-axis/AviUtl-Plugin-OptimizeEditBox/assets/132639613/f6e37eea-3cd6-4e7d-b959-07577431bb92)
+
+		段数が `4` の場合の見え方．
+
 		-	`1` と `-2` の違いは，オブジェクト端をドラッグ中の見え方で確認できます．
 
 			-	`-2` (単色表示) の場合．
 
-				TODO: add an image.
+				![端をドラッグ中も単色](https://github.com/sigma-axis/AviUtl-Plugin-OptimizeEditBox/assets/132639613/a00ab7f6-a114-403b-a377-1eaac7bad1f9)
 
 			-	`1` (1段の階段グラデーション) の場合．
 
-				TODO: add an image.
+				![端をドラッグ中は一部だけ色が違う](https://github.com/sigma-axis/AviUtl-Plugin-OptimizeEditBox/assets/132639613/e4260cfe-6375-4faf-82a4-4f6aec92e30c)
 
 		-	厳密には patch.aul の見え方とは異なります．
 
@@ -210,11 +214,11 @@ innerBottom=1
 
 -	8.0.0_mod3.1
 
-	2023/07/??
+	2023/07/24
 
-	- グラデーション描画周りのコード整理．64ビット整数の割り算をなくせたのとバイナリサイズも小さくなった． 
-	- 枠線描画の「選択/未選択が同じ枠線なので切り替え判断しなくていい」処理の「同じ枠線」の判断基準を正確にした．
-	- コード整理，自動ビルド周りの微修正．
+	- 階段グラデーションの段数が `1` の場合の仕様変更，旧仕様は `-2` で指定するように．
+ 	- タイムライン描画や遅延タイマー周りのコード整理．
+	- ビルドオプションや自動ビルド周りの微修正．
 
 -	8.0.0_mod3
 
@@ -283,7 +287,7 @@ innerBottom=1
 この作成物および同梱物を使用したことによって生じたすべての障害・損害・不具合等に関しては、私と私の関係者および私の所属するいかなる団体・組織とも、一切の責任を負いません。各自の責任においてご使用ください。
 
 
-# 移行の手順
+## 移行の手順
 
 蛇色様のオリジナル版から移行するための手順です．
 
@@ -362,7 +366,7 @@ innerBottom=1
 	1.	最後に UTF8 形式で保存します．(エディットボックスのフォント指定に日本語文字が含まれる場合必須．)
 
 
-# 謝辞
+## 謝辞
 
 このような素晴らしいプラグインを制作，公開してくださった蛇色様に感謝申し上げます．
 AviUtl を使うたびに必ずお世話になっているプラグインです．
@@ -370,7 +374,7 @@ AviUtl を使うたびに必ずお世話になっているプラグインです�
 加えてエディットボックスの Unicode 化の手法や各種関数のアドレスを探して上書きする手法は
 少なくとも私個人では見つけられませんでした．ソースコードを公開してくださったことにも重ねて感謝申し上げます．
 
-# 連絡・バグ報告
+## 連絡・バグ報告
 
 *改造版についての不具合報告等はオリジナル版の作成者ではなく，私 sigma-axis にまでご連絡ください．*
 
